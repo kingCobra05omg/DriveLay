@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "690921397333",
+    "project_id": "juanperez-2e025",
+    "storage_bucket": "juanperez-2e025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:690921397333:android:043681eb88d4c3b04708dc",
+        "android_client_info": {
+          "package_name": "com.DriveLay.JuanPerez"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnaWlQfZyIraAPKhXawuH0eGtmTI4ncvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
