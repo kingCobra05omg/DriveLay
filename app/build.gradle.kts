@@ -21,8 +21,8 @@ android {
         applicationId = "com.DriveLay.JuanPerez"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.0.6"
+        versionCode = 4
+        versionName = "0.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

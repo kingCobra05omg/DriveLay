@@ -27,6 +27,7 @@ import com.DriveLay.JuanPerez.firebase.FirebaseManager
 import com.DriveLay.JuanPerez.model.User
 import com.DriveLay.JuanPerez.ui.theme.JuanPerezTheme
 import kotlinx.coroutines.launch
+import android.util.Patterns
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +50,30 @@ fun SignUpScreen(
     val firebaseManager = remember { FirebaseManager() }
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+
+    fun isValidEmail(value: String): Boolean =
+        value.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(value).matches()
+
+    // Requisitos más estrictos: mínimo 8, mayúscula, minúscula, número y símbolo
+    fun isValidPassword(value: String): Boolean {
+        val hasMinLength = value.length >= 8
+        val hasUpper = value.any { it.isUpperCase() }
+        val hasLower = value.any { it.isLowerCase() }
+        val hasDigit = value.any { it.isDigit() }
+        val hasSymbol = value.any { !it.isLetterOrDigit() }
+        return hasMinLength && hasUpper && hasLower && hasDigit && hasSymbol
+    }
     
     // Función para registrar usuario
     fun registerUser() {
+        if (!isValidEmail(email)) {
+            errorMessage = "Email inválido"
+            return
+        }
+        if (!isValidPassword(password)) {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres"
+            return
+        }
         if (password != confirmPassword) {
             errorMessage = "Las contraseñas no coinciden"
             return
@@ -65,7 +87,8 @@ fun SignUpScreen(
                 val result = firebaseManager.registerUser(email, password)
                 result.fold(
                     onSuccess = { firebaseUser ->
-                        firebaseUser?.let { user ->
+                        if (firebaseUser != null) {
+                            val user = firebaseUser
                             // Guardar datos adicionales del usuario
                             val userData = User(
                                 id = user.uid,
@@ -74,7 +97,7 @@ fun SignUpScreen(
                                 dni = dni,
                                 email = email
                             )
-                            
+
                             firebaseManager.saveUserData(user.uid, userData.toMap())
                                 .fold(
                                     onSuccess = {
@@ -86,6 +109,10 @@ fun SignUpScreen(
                                         errorMessage = "Error al guardar datos: ${exception.message}"
                                     }
                                 )
+                        } else {
+                            // Manejar el caso poco común de usuario nulo para evitar bloqueo
+                            isLoading = false
+                            errorMessage = "Error al registrar: usuario no disponible"
                         }
                     },
                     onFailure = { exception ->
@@ -211,12 +238,13 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Gmail", color = Color(0xFF212121)) },
-                placeholder = { Text("Ingresa tu Gmail", color = Color(0xFF424242)) },
+                label = { Text("Email", color = Color(0xFF212121)) },
+                placeholder = { Text("Ingresa tu email", color = Color(0xFF424242)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
+                isError = email.isNotEmpty() && !isValidEmail(email),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color(0xFF212121),
                     unfocusedTextColor = Color(0xFF212121),
@@ -224,6 +252,17 @@ fun SignUpScreen(
                     unfocusedLabelColor = Color(0xFF424242)
                 )
             )
+
+            if (email.isNotEmpty() && !isValidEmail(email)) {
+                Text(
+                    text = "Email inválido",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -247,6 +286,7 @@ fun SignUpScreen(
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
+                isError = password.isNotEmpty() && !isValidPassword(password),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -257,6 +297,17 @@ fun SignUpScreen(
                     unfocusedBorderColor = Color.White
                 )
             )
+
+            if (password.isNotEmpty() && !isValidPassword(password)) {
+                Text(
+                    text = "La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -339,8 +390,8 @@ fun SignUpScreen(
                          nombre.isNotBlank() && 
                          apellido.isNotBlank() && 
                          dni.isNotBlank() && 
-                         email.isNotBlank() && 
-                         password.isNotBlank() && 
+                         email.isNotBlank() && isValidEmail(email) && 
+                         password.isNotBlank() && isValidPassword(password) && 
                          confirmPassword.isNotBlank() &&
                          password == confirmPassword
             ) {

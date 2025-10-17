@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.DriveLay.JuanPerez.firebase.FirebaseManager
 import com.DriveLay.JuanPerez.ui.theme.JuanPerezTheme
 import kotlinx.coroutines.launch
+import android.util.Patterns
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +41,24 @@ fun LoginScreen(
     
     val firebaseManager = remember { FirebaseManager() }
     val coroutineScope = rememberCoroutineScope()
+
+    fun isValidEmail(value: String): Boolean =
+        value.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(value).matches()
+
+    fun isValidPassword(value: String): Boolean =
+        value.length >= 6
     
     // Función para iniciar sesión
     fun signInUser() {
+        if (!isValidEmail(email)) {
+            errorMessage = "Email inválido"
+            return
+        }
+        if (!isValidPassword(password)) {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
         isLoading = true
         errorMessage = ""
         
@@ -131,6 +147,7 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
+                isError = email.isNotEmpty() && !isValidEmail(email),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -141,6 +158,17 @@ fun LoginScreen(
                     unfocusedBorderColor = Color.White
                 )
             )
+
+            if (email.isNotEmpty() && !isValidEmail(email)) {
+                Text(
+                    text = "Email inválido",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -164,6 +192,7 @@ fun LoginScreen(
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
+                isError = password.isNotEmpty() && !isValidPassword(password),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -174,6 +203,17 @@ fun LoginScreen(
                     unfocusedBorderColor = Color.White
                 )
             )
+
+            if (password.isNotEmpty() && !isValidPassword(password)) {
+                Text(
+                    text = "La contraseña debe tener al menos 6 caracteres",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
             
@@ -223,7 +263,9 @@ fun LoginScreen(
                     containerColor = Color(0xFF2196F3)
                 ),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+                enabled = !isLoading &&
+                         email.isNotBlank() && isValidEmail(email) &&
+                         password.isNotBlank() && isValidPassword(password)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
