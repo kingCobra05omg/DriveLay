@@ -200,7 +200,156 @@ class FirebaseManager {
     }
 
     private fun generateCompanyCode(): String {
-        val chars = (('A'..'Z') + ('0'..'9')).toList()
+        val chars = (("A"[0]..'Z') + ('0'..'9')).toList()
         return (1..6).map { chars[Random.nextInt(chars.size)] }.joinToString("")
+    }
+
+    // ====== Empresas (contexto actual) ======
+    suspend fun getCurrentCompanyId(): Result<String?> {
+        return try {
+            val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
+            val query = firestore.collection("companies").whereArrayContains("members", uid).get().await()
+            val companyId = query.documents.firstOrNull()?.id
+            Result.success(companyId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCompanyData(companyId: String): Result<Map<String, Any>?> {
+        return try {
+            val doc = firestore.collection("companies").document(companyId).get().await()
+            Result.success(doc.data)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Agregar: Listar todas las empresas del usuario actual
+    suspend fun getUserCompanies(): Result<List<Map<String, Any>>> {
+        return try {
+            val uid = getCurrentUser()?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
+            val query = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("companies")
+                .whereArrayContains("members", uid)
+                .get()
+                .await()
+            val list = query.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                val mutable = data.toMutableMap()
+                mutable["id"] = doc.id
+                mutable.toMap()
+            }
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ====== Empleados ======
+    suspend fun addEmployee(companyId: String, employee: com.DriveLay.JuanPerez.model.Employee): Result<String> {
+        return try {
+            val ref = firestore.collection("companies").document(companyId).collection("employees").add(employee.toMap()).await()
+            // guardar id en el documento
+            ref.update("id", ref.id).await()
+            Result.success(ref.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getEmployees(companyId: String): Result<List<com.DriveLay.JuanPerez.model.Employee>> {
+        return try {
+            val snap = firestore.collection("companies").document(companyId).collection("employees").get().await()
+            val list = snap.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                com.DriveLay.JuanPerez.model.Employee.fromMap(data)
+            }
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateEmployee(companyId: String, employeeId: String, updates: Map<String, Any?>): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId).collection("employees").document(employeeId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteEmployee(companyId: String, employeeId: String): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId).collection("employees").document(employeeId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ====== Vehículos ======
+    suspend fun addVehicle(companyId: String, vehicle: com.DriveLay.JuanPerez.model.Vehicle): Result<String> {
+        return try {
+            val ref = firestore.collection("companies").document(companyId).collection("vehicles").add(vehicle.toMap()).await()
+            ref.update("id", ref.id).await()
+            Result.success(ref.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getVehicles(companyId: String): Result<List<com.DriveLay.JuanPerez.model.Vehicle>> {
+        return try {
+            val snap = firestore.collection("companies").document(companyId).collection("vehicles").get().await()
+            val list = snap.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                com.DriveLay.JuanPerez.model.Vehicle.fromMap(data)
+            }
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateVehicle(companyId: String, vehicleId: String, updates: Map<String, Any?>): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId).collection("vehicles").document(vehicleId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteVehicle(companyId: String, vehicleId: String): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId).collection("vehicles").document(vehicleId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadCompanyImage(companyId: String, uri: android.net.Uri): Result<String> {
+        return try {
+            val ref = com.google.firebase.storage.FirebaseStorage.getInstance().reference.child("company_images/$companyId.jpg")
+            ref.putFile(uri).await()
+            val downloadUrl = ref.downloadUrl.await().toString()
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateCompany(companyId: String, updates: Map<String, Any?>): Result<Unit> {
+        return try {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("companies").document(companyId)
+                .update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

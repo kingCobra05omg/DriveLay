@@ -5,12 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddBusiness
-import androidx.compose.material.icons.filled.GroupAdd
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,14 +71,13 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Card: Crear Empresa (formato anterior, con color actualizado)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
                     .clickable { onCreateCompanyClick() },
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF2196F3)
+                    containerColor = Color(0xFF4CAF50)
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -96,7 +94,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Crear una Empresa",
+                        text = "Crear Empresa",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White
@@ -106,7 +104,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card: Unirse a Empresa (formato anterior, con color actualizado)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,34 +145,34 @@ fun HomeScreen(
 
         NavigationBar {
             NavigationBarItem(
-                selected = true,
-                onClick = { onBottomNavSelected("home") },
-                icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                label = { Text("Home") }
-            )
-            NavigationBarItem(
-                selected = false,
-                onClick = { onBottomNavSelected("viajes") },
-                icon = { Icon(Icons.Filled.Home, contentDescription = "Viajes") },
-                label = { Text("Viajes") }
-            )
-            NavigationBarItem(
-                selected = false,
-                onClick = { onBottomNavSelected("mensajes") },
-                icon = { Icon(Icons.Filled.Message, contentDescription = "Mensajes") },
-                label = { Text("Mensajes") }
-            )
-            NavigationBarItem(
-                selected = false,
-                onClick = { onBottomNavSelected("alertas") },
-                icon = { Icon(Icons.Filled.Notifications, contentDescription = "Alertas") },
-                label = { Text("Alertas") }
-            )
-            NavigationBarItem(
                 selected = false,
                 onClick = { onBottomNavSelected("perfil") },
                 icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
                 label = { Text("Perfil") }
+            )
+            NavigationBarItem(
+                selected = true,
+                onClick = { onBottomNavSelected("empresa") },
+                icon = { Icon(Icons.Filled.Home, contentDescription = "Empresa") },
+                label = { Text("Empresa") }
+            )
+            NavigationBarItem(
+                selected = false,
+                onClick = { onBottomNavSelected("vehiculos") },
+                icon = { Icon(Icons.Filled.DirectionsCar, contentDescription = "Vehículos") },
+                label = { Text("Vehículos") }
+            )
+            NavigationBarItem(
+                selected = false,
+                onClick = { onBottomNavSelected("alertas") },
+                icon = { Icon(Icons.Filled.Notifications, contentDescription = "Notificaciones") },
+                label = { Text("Notificaciones") }
+            )
+            NavigationBarItem(
+                selected = false,
+                onClick = { onBottomNavSelected("config") },
+                icon = { Icon(Icons.Filled.Settings, contentDescription = "Config") },
+                label = { Text("Config") }
             )
         }
     }

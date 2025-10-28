@@ -4,7 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.DriveLay.JuanPerez.ui.screens.*
+
 import com.DriveLay.JuanPerez.ui.screens.LoginScreen
 import com.DriveLay.JuanPerez.ui.screens.SignUpScreen
 import com.DriveLay.JuanPerez.ui.screens.WelcomeScreen
@@ -12,6 +15,9 @@ import com.DriveLay.JuanPerez.ui.screens.HomeScreen
 import com.DriveLay.JuanPerez.ui.screens.CreateCompanyScreen
 import com.DriveLay.JuanPerez.ui.screens.JoinCompanyScreen
 import com.DriveLay.JuanPerez.ui.screens.ProfileScreen
+import com.DriveLay.JuanPerez.ui.screens.CompanyHomeScreen
+import com.DriveLay.JuanPerez.ui.screens.VehiclesListScreen
+import com.DriveLay.JuanPerez.ui.screens.AdminDashboardScreen
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String) {
@@ -22,16 +28,17 @@ sealed class Screen(val route: String) {
     object CreateCompany : Screen("createCompany")
     object JoinCompany : Screen("joinCompany")
     object Profile : Screen("profile")
+    object CompanyHome : Screen("companyHome")
+    object Vehicles : Screen("vehicles")
+    object AdminDashboard : Screen("adminDashboard")
+    object Companies : Screen("companies")
+    object CompanyHomeDetail : Screen("companyHome/{companyId}")
+    object Employees : Screen("employees")
 }
 
 @Composable
-fun AppNavigation(
-    navController: NavHostController = rememberNavController()
-) {
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Welcome.route
-    ) {
+fun AppNavigation(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = Screen.Welcome.route) {
         composable(Screen.Welcome.route) {
             WelcomeScreen(
                 onLoginClick = {
@@ -49,14 +56,13 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onLoginSuccess = {
-                    // Navegar a Home después del login exitoso
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
                 onForgotPasswordClick = {
-                    // Aquí se implementaría la navegación a recuperar contraseña
+                    // Recuperar contraseña (pendiente)
                 }
             )
         }
@@ -67,7 +73,6 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onSignUpSuccess = {
-                    // Navegar a Home después del registro exitoso
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                         launchSingleTop = true
@@ -92,9 +97,10 @@ fun AppNavigation(
                 },
                 onBottomNavSelected = { dest ->
                     when (dest) {
-                        "home" -> Unit // ya estamos en Home
+                        "home" -> Unit
+                        "empresa" -> navController.navigate(Screen.CompanyHome.route)
+                        "vehiculos" -> navController.navigate(Screen.Vehicles.route)
                         "perfil" -> navController.navigate(Screen.Profile.route)
-                        // Rutas futuras: "viajes", "mensajes", "alertas", "perfil"
                         else -> Unit
                     }
                 }
@@ -112,8 +118,9 @@ fun AppNavigation(
                         val result = firebaseManager.createCompany(name, employees, vehicles)
                         result.fold(
                             onSuccess = {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                // Redirigir directamente al inicio de empresa
+                                navController.navigate(Screen.CompanyHome.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = false }
                                     launchSingleTop = true
                                 }
                             },
@@ -137,8 +144,9 @@ fun AppNavigation(
                         val result = firebaseManager.joinCompany(code)
                         result.fold(
                             onSuccess = {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                // Redirigir directamente al inicio de empresa
+                                navController.navigate(Screen.CompanyHome.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = false }
                                     launchSingleTop = true
                                 }
                             },
@@ -157,13 +165,62 @@ fun AppNavigation(
             ProfileScreen(
                 onBackClick = { navController.popBackStack() },
                 onSignOut = {
-                    // Al cerrar sesión, ir a Welcome y limpiar Home
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
             )
+        }
+
+        // Lista de Empresas
+        composable(Screen.Companies.route) {
+            CompaniesListScreen(
+                onBackClick = { navController.popBackStack() },
+                onSelectCompany = { companyId ->
+                    navController.navigate("companyHome/$companyId")
+                }
+            )
+        }
+
+        // Inicio de Empresa (por defecto: empresa actual)
+        composable(Screen.CompanyHome.route) {
+            CompanyHomeScreen(
+                onBackClick = { navController.popBackStack() },
+                onGoToAdmin = { navController.navigate(Screen.AdminDashboard.route) }
+            )
+        }
+
+        // Inicio de Empresa por ID explícito
+        composable(
+            route = "companyHome/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType; nullable = true })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId")
+            CompanyHomeScreen(
+                onBackClick = { navController.popBackStack() },
+                onGoToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
+                companyIdArg = companyId
+            )
+        }
+
+        // Panel de Administración
+        composable(Screen.AdminDashboard.route) {
+            AdminDashboardScreen(
+                onBackClick = { navController.popBackStack() },
+                onManageEmployees = { navController.navigate(Screen.Employees.route) },
+                onManageFleet = { navController.navigate(Screen.Vehicles.route) }
+            )
+        }
+
+        // Lista de Empleados
+        composable(Screen.Employees.route) {
+            EmployeesListScreen(onBackClick = { navController.popBackStack() })
+        }
+        
+        // Lista de Vehículos
+        composable(Screen.Vehicles.route) {
+            VehiclesListScreen(onBackClick = { navController.popBackStack() })
         }
     }
 }
