@@ -30,13 +30,17 @@ fun JoinCompanyScreen(
             .background(Color(0xFF003499))
     ) {
         TopAppBar(
-            title = { Text("Unirse a Empresa", fontSize = 18.sp, fontWeight = FontWeight.Medium) },
+            title = { Text("Unirse a Empresa", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = Color.White) },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver")
+                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color(0xFF003499),
+                navigationIconContentColor = Color.White,
+                titleContentColor = Color.White
+            )
         )
 
         Column(
@@ -55,7 +59,17 @@ fun JoinCompanyScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Text)
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Text),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF212121),
+                    unfocusedTextColor = Color(0xFF212121),
+                    focusedLabelColor = Color(0xFF616161),
+                    unfocusedLabelColor = Color(0xFF9E9E9E),
+                    focusedContainerColor = Color(0xFFF1F5F9),
+                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedBorderColor = Color(0xFFCBD5E1),
+                    unfocusedBorderColor = Color(0xFFE2E8F0)
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -67,7 +81,17 @@ fun JoinCompanyScreen(
                 placeholder = { Text("Ingrese el nombre de la empresa", color = Color(0xFF424242)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF212121),
+                    unfocusedTextColor = Color(0xFF212121),
+                    focusedLabelColor = Color(0xFF616161),
+                    unfocusedLabelColor = Color(0xFF9E9E9E),
+                    focusedContainerColor = Color(0xFFF1F5F9),
+                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedBorderColor = Color(0xFFCBD5E1),
+                    unfocusedBorderColor = Color(0xFFE2E8F0)
+                )
             )
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -143,36 +143,78 @@ fun HomeScreen(
             )
         }
 
-        NavigationBar {
-            NavigationBarItem(
-                selected = false,
-                onClick = { onBottomNavSelected("perfil") },
-                icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
-                label = { Text("Perfil") }
-            )
+        NavigationBar(
+            containerColor = Color(0xFF003499)
+        ) {
+            // Inicio
             NavigationBarItem(
                 selected = true,
-                onClick = { onBottomNavSelected("empresa") },
-                icon = { Icon(Icons.Filled.Home, contentDescription = "Empresa") },
-                label = { Text("Empresa") }
+                onClick = { onBottomNavSelected("inicio") },
+                icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
+                label = { Text("Inicio") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedIconColor = Color(0xFFBBDEFB),
+                    unselectedTextColor = Color(0xFFBBDEFB),
+                    indicatorColor = Color(0xFF1565C0)
+                )
             )
+            // Empresa
+            NavigationBarItem(
+                selected = false,
+                onClick = { onBottomNavSelected("empresa") },
+                icon = { Icon(Icons.Filled.Business, contentDescription = "Empresa") },
+                label = { Text("Empresa") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedIconColor = Color(0xFFBBDEFB),
+                    unselectedTextColor = Color(0xFFBBDEFB),
+                    indicatorColor = Color(0xFF1565C0)
+                )
+            )
+            // Vehículos
             NavigationBarItem(
                 selected = false,
                 onClick = { onBottomNavSelected("vehiculos") },
                 icon = { Icon(Icons.Filled.DirectionsCar, contentDescription = "Vehículos") },
-                label = { Text("Vehículos") }
+                label = { Text("Vehículos") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedIconColor = Color(0xFFBBDEFB),
+                    unselectedTextColor = Color(0xFFBBDEFB),
+                    indicatorColor = Color(0xFF1565C0)
+                )
             )
+            // Notificaciones
             NavigationBarItem(
                 selected = false,
-                onClick = { onBottomNavSelected("alertas") },
+                onClick = { onBottomNavSelected("notificaciones") },
                 icon = { Icon(Icons.Filled.Notifications, contentDescription = "Notificaciones") },
-                label = { Text("Notificaciones") }
+                label = { Text("Notificaciones") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedIconColor = Color(0xFFBBDEFB),
+                    unselectedTextColor = Color(0xFFBBDEFB),
+                    indicatorColor = Color(0xFF1565C0)
+                )
             )
+            // Perfil
             NavigationBarItem(
                 selected = false,
-                onClick = { onBottomNavSelected("config") },
-                icon = { Icon(Icons.Filled.Settings, contentDescription = "Config") },
-                label = { Text("Config") }
+                onClick = { onBottomNavSelected("perfil") },
+                icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
+                label = { Text("Perfil") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    unselectedIconColor = Color(0xFFBBDEFB),
+                    unselectedTextColor = Color(0xFFBBDEFB),
+                    indicatorColor = Color(0xFF1565C0)
+                )
             )
         }
     }

@@ -32,14 +32,18 @@ fun CreateCompanyScreen(
     ) {
         TopAppBar(
             title = {
-                Text("Crear Empresa", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                Text("Crear Empresa", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = Color.White)
             },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver")
+                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color(0xFF003499),
+                navigationIconContentColor = Color.White,
+                titleContentColor = Color.White
+            )
         )
 
         Column(
@@ -70,7 +74,17 @@ fun CreateCompanyScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF212121),
+                    unfocusedTextColor = Color(0xFF212121),
+                    focusedLabelColor = Color(0xFF616161),
+                    unfocusedLabelColor = Color(0xFF9E9E9E),
+                    focusedContainerColor = Color(0xFFF1F5F9),
+                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedBorderColor = Color(0xFFCBD5E1),
+                    unfocusedBorderColor = Color(0xFFE2E8F0)
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -83,7 +97,17 @@ fun CreateCompanyScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF212121),
+                    unfocusedTextColor = Color(0xFF212121),
+                    focusedLabelColor = Color(0xFF616161),
+                    unfocusedLabelColor = Color(0xFF9E9E9E),
+                    focusedContainerColor = Color(0xFFF1F5F9),
+                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedBorderColor = Color(0xFFCBD5E1),
+                    unfocusedBorderColor = Color(0xFFE2E8F0)
+                )
             )
 
             Spacer(modifier = Modifier.height(24.dp))

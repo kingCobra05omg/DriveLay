@@ -40,14 +40,18 @@ fun CompaniesListScreen(
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
-                title = { Text("Mis Empresas", fontSize = 18.sp) },
+            TopAppBar(
+                title = { Text("Mis Empresas", fontSize = 18.sp, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF003499),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White
+                )
             )
         }
     ) { padding ->

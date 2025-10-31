@@ -208,9 +208,18 @@ class FirebaseManager {
     suspend fun getCurrentCompanyId(): Result<String?> {
         return try {
             val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
-            val query = firestore.collection("companies").whereArrayContains("members", uid).get().await()
-            val companyId = query.documents.firstOrNull()?.id
-            Result.success(companyId)
+            val companiesCol = firestore.collection("companies")
+            // Primero buscar por membresía
+            val membersQuery = companiesCol.whereArrayContains("members", uid).get().await()
+            val idFromMembers = membersQuery.documents.firstOrNull()?.id
+            if (idFromMembers != null) {
+                Result.success(idFromMembers)
+            } else {
+                // Fallback: empresas donde el usuario es propietario (ownerId)
+                val ownerQuery = companiesCol.whereEqualTo("ownerId", uid).get().await()
+                val idFromOwner = ownerQuery.documents.firstOrNull()?.id
+                Result.success(idFromOwner)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -225,16 +234,18 @@ class FirebaseManager {
         }
     }
 
-    // Agregar: Listar todas las empresas del usuario actual
+    // Agregar: Listar todas las empresas del usuario actual (como miembro o propietario)
     suspend fun getUserCompanies(): Result<List<Map<String, Any>>> {
         return try {
             val uid = getCurrentUser()?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
-            val query = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("companies")
-                .whereArrayContains("members", uid)
-                .get()
-                .await()
-            val list = query.documents.mapNotNull { doc ->
+            val companiesCol = com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("companies")
+            val membersSnap = companiesCol.whereArrayContains("members", uid).get().await()
+            val ownerSnap = companiesCol.whereEqualTo("ownerId", uid).get().await()
+
+            val allDocs = (membersSnap.documents + ownerSnap.documents)
+            val distinctDocs = allDocs.distinctBy { it.id }
+
+            val list = distinctDocs.mapNotNull { doc ->
                 val data = doc.data ?: return@mapNotNull null
                 val mutable = data.toMutableMap()
                 mutable["id"] = doc.id
@@ -283,6 +294,60 @@ class FirebaseManager {
     suspend fun deleteEmployee(companyId: String, employeeId: String): Result<Unit> {
         return try {
             firestore.collection("companies").document(companyId).collection("employees").document(employeeId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ====== Invitaciones ======
+    suspend fun addInvitation(companyId: String, email: String, role: String): Result<String> {
+        return try {
+            val invitation = com.DriveLay.JuanPerez.model.Invitation(
+                companyId = companyId,
+                email = email,
+                role = role,
+                status = "Pendiente"
+            )
+            val ref = firestore.collection("companies").document(companyId)
+                .collection("invitations").add(invitation.toMap()).await()
+            ref.update("id", ref.id).await()
+            Result.success(ref.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getInvitations(companyId: String): Result<List<com.DriveLay.JuanPerez.model.Invitation>> {
+        return try {
+            val snap = firestore.collection("companies").document(companyId)
+                .collection("invitations").get().await()
+            val list = snap.documents.mapNotNull { doc ->
+                val data = doc.data ?: return@mapNotNull null
+                com.DriveLay.JuanPerez.model.Invitation.fromMap(data as Map<String, Any>)
+            }
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateInvitationStatus(companyId: String, invitationId: String, status: String): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId)
+                .collection("invitations").document(invitationId)
+                .update(mapOf("status" to status)).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteInvitation(companyId: String, invitationId: String): Result<Unit> {
+        return try {
+            firestore.collection("companies").document(companyId)
+                .collection("invitations").document(invitationId)
+                .delete().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

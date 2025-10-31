@@ -56,11 +56,16 @@ fun AdminDashboardScreen(
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
-                title = { Text("Mi Empresa", fontWeight = FontWeight.SemiBold) },
+            TopAppBar(
+                title = { Text("Mi Empresa", fontWeight = FontWeight.SemiBold, color = Color.White) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) { Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás") }
-                }
+                    IconButton(onClick = onBackClick) { Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White) }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF003499),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White
+                )
             )
         }
     ) { padding ->
