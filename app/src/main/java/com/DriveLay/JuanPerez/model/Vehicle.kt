@@ -7,19 +7,26 @@ data class Vehicle(
     val plate: String = "",
     val status: String = "Activo", // Activo, Mantenimiento, Inactivo
     val description: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val assignedTo: String? = null,
+    val assignedAt: Long? = null
 ) {
-    constructor() : this("", "", "", "", "Activo", "", 0L)
+    constructor() : this("", "", "", "", "Activo", "", 0L, null, null)
 
-    fun toMap(): Map<String, Any> = mapOf(
-        "id" to id,
-        "companyId" to companyId,
-        "name" to name,
-        "plate" to plate,
-        "status" to status,
-        "description" to description,
-        "createdAt" to createdAt
-    )
+    fun toMap(): Map<String, Any> {
+        val map = mutableMapOf<String, Any>(
+            "id" to id,
+            "companyId" to companyId,
+            "name" to name,
+            "plate" to plate,
+            "status" to status,
+            "description" to description,
+            "createdAt" to createdAt
+        )
+        assignedTo?.let { map["assignedTo"] = it }
+        assignedAt?.let { map["assignedAt"] = it }
+        return map
+    }
 
     companion object {
         fun fromMap(map: Map<String, Any>): Vehicle = Vehicle(
@@ -29,7 +36,9 @@ data class Vehicle(
             plate = map["plate"] as? String ?: "",
             status = map["status"] as? String ?: "Activo",
             description = map["description"] as? String ?: "",
-            createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L
+            createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L,
+            assignedTo = map["assignedTo"] as? String,
+            assignedAt = (map["assignedAt"] as? Number)?.toLong()
         )
     }
 }

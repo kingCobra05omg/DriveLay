@@ -1,6 +1,7 @@
 package com.DriveLay.JuanPerez.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 @Composable
 fun VehiclesListScreen(
     onBackClick: () -> Unit,
+    onVehicleClick: (String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val firebaseManager = remember { FirebaseManager() }
@@ -44,6 +46,7 @@ fun VehiclesListScreen(
     var newBrand by remember { mutableStateOf("") }
     var newModel by remember { mutableStateOf("") }
     var newYear by remember { mutableStateOf("") }
+    var newColor by remember { mutableStateOf("") }
     var newPlate by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -114,7 +117,7 @@ fun VehiclesListScreen(
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(vehicles) { vehicle ->
-                        VehicleItem(vehicle)
+                        VehicleItem(vehicle = vehicle, onClick = { onVehicleClick(vehicle.id) })
                     }
                 }
             }
@@ -260,6 +263,26 @@ fun VehiclesListScreen(
                                 unfocusedBorderColor = Color(0xFFE2E8F0)
                             )
                         )
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = newColor,
+                            onValueChange = { newColor = it },
+                            label = { Text("Color", color = Color(0xFF212121)) },
+                            placeholder = { Text("Ej: Azul", color = Color(0xFF9E9E9E)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF212121),
+                                unfocusedTextColor = Color(0xFF212121),
+                                focusedLabelColor = Color(0xFF616161),
+                                unfocusedLabelColor = Color(0xFF9E9E9E),
+                                focusedContainerColor = Color(0xFFF1F5F9),
+                                unfocusedContainerColor = Color(0xFFF1F5F9),
+                                focusedBorderColor = Color(0xFFCBD5E1),
+                                unfocusedBorderColor = Color(0xFFE2E8F0)
+                            )
+                        )
                     }
                 }
 
@@ -276,10 +299,11 @@ fun VehiclesListScreen(
                             newBrand.isNotBlank() &&
                             newModel.isNotBlank() &&
                             yearInt != null &&
+                            newColor.isNotBlank() &&
                             newPlate.isNotBlank()
                         ) {
                             val composedName = "${newBrand.trim()} ${newModel.trim()}"
-                            val desc = "Tipo: ${vehicleType.trim()}, Año: ${newYear.trim()}"
+                            val desc = "Tipo: ${vehicleType.trim()}, Año: ${newYear.trim()}, Color: ${newColor.trim()}"
                             scope.launch {
                                 val res = firebaseManager.addVehicle(
                                     cid,
@@ -303,13 +327,14 @@ fun VehiclesListScreen(
                                     newBrand = ""
                                     newModel = ""
                                     newYear = ""
+                                    newColor = ""
                                     newPlate = ""
                                 }, onFailure = { e ->
                                     error = e.message
                                 })
                             }
                         } else {
-                            error = "Completá matrícula, marca, modelo y año (número)"
+                            error = "Completá matrícula, marca, modelo, año (número) y color"
                         }
                     },
                     modifier = Modifier
@@ -327,10 +352,27 @@ fun VehiclesListScreen(
 }
 
 @Composable
-private fun VehicleItem(vehicle: Vehicle) {
+private fun VehicleItem(vehicle: Vehicle, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(vehicle.name) },
-        supportingContent = { Text(vehicle.plate) }
+        supportingContent = { Text(vehicle.plate) },
+        trailingContent = { StatusChip(status = vehicle.status) },
+        modifier = Modifier.clickable(onClick = onClick)
     )
     Divider()
+}
+
+@Composable
+private fun StatusChip(status: String) {
+    val (bg, fg) = when (status) {
+        "En Uso" -> Color(0xFFDCFCE7) to Color(0xFF166534) // verde
+        "Mantenimiento" -> Color(0xFFFEF3C7) to Color(0xFF92400E) // amarillo
+        "Inactivo" -> Color(0xFFFEE2E2) to Color(0xFF991B1B) // rojo
+        else -> Color(0xFFDDEAFE) to Color(0xFF1E40AF) // azul por defecto (Activo)
+    }
+    AssistChip(
+        onClick = {},
+        label = { Text(status, color = fg) },
+        colors = AssistChipDefaults.assistChipColors(containerColor = bg)
+    )
 }

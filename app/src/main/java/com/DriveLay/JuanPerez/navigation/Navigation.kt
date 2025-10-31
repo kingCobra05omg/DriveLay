@@ -34,6 +34,7 @@ sealed class Screen(val route: String) {
     object Companies : Screen("companies")
     object CompanyHomeDetail : Screen("companyHome/{companyId}")
     object Employees : Screen("employees")
+    object VehicleDetail : Screen("vehicleDetail/{vehicleId}")
 }
 
 @Composable
@@ -220,7 +221,24 @@ fun AppNavigation(navController: NavHostController) {
         
         // Lista de Vehículos
         composable(Screen.Vehicles.route) {
-            VehiclesListScreen(onBackClick = { navController.popBackStack() })
+            VehiclesListScreen(
+                onBackClick = { navController.popBackStack() },
+                onVehicleClick = { vehicleId ->
+                    navController.navigate("vehicleDetail/$vehicleId")
+                }
+            )
+        }
+
+        // Detalle de Vehículo
+        composable(
+            route = "vehicleDetail/{vehicleId}",
+            arguments = listOf(navArgument("vehicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: ""
+            VehicleDetailScreen(
+                onBackClick = { navController.popBackStack() },
+                vehicleId = vehicleId
+            )
         }
     }
 }
