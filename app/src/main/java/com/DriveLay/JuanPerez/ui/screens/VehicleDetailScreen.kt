@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
@@ -135,10 +136,17 @@ fun VehicleDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Encabezado con icono, nombre y placa
+            // Encabezado con ícono realzado, nombre y placa en chip
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Surface(shape = CircleShape, color = Color(0xFFE3F2FD)) {
-                    Box(modifier = Modifier.size(80.dp), contentAlignment = Alignment.Center) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFE3F2FD),
+                    shadowElevation = 6.dp,
+                    tonalElevation = 2.dp,
+                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.size(96.dp)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         val icon = if ((tipo.lowercase()).contains("camión")) Icons.Filled.LocalShipping else Icons.Filled.DirectionsCar
                         Icon(icon, contentDescription = null, tint = Color(0xFF1565C0))
                     }
@@ -146,17 +154,27 @@ fun VehicleDetailScreen(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     v.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF1F2937)
                 )
-                Text(
-                    v.plate ?: "",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
+                val plateText = v.plate ?: ""
+                if (plateText.isNotBlank()) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text(
+                            plateText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
                 val statusText = v.status.ifBlank { "Activo" }
                 val (chipBg, chipFg) = when (statusText) {
                     "En Uso" -> Color(0xFFDCFCE7) to Color(0xFF166534)
