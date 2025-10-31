@@ -1,0 +1,234 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+}
+
+
+
+.navbar {
+    background-color: #003499;
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    overflow: visible;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.img{
+    width: auto;
+    height: 40px; 
+    display: block;
+    transform: scale(1.6); 
+    transform-origin: left center;
+    transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.texto{
+    margin-left: 20px;
+    font-size: 1.8rem;
+}
+
+.img:hover {
+    transform: scale(1.9);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 3rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #cfe8ff;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;  
+    gap: 0.5rem;
+}
+
+body{
+    background-color: #001f5e;
+}
+
+.main{
+    height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url('../image/FondoBody.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+}
+
+.texto2{
+    color: white;
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.subtitulo {
+    color: white;
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.download-btn {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: 1rem 3rem;
+    background-color: #003499;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.download-btn:hover {
+    background-color: #004ecc;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.download-btn[disabled] {
+    background-color: #5a7fb8;
+    opacity: 0.85;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.info-section {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 1000px;
+    border-radius: 15px;
+}
+
+.info-card {
+    background-color: rgba(173, 216, 230, 0.2);
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+    transition: transform 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+}
+
+.info-card i {
+    font-size: 3rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.info-card h3 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.info-link {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    background-color: #003499;
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.info-link:hover {
+    background-color: #004ecc;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.team-container {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.team-member {
+    background-color: rgba(0, 52, 153, 0.9);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+    backdrop-filter: blur(5px);
+    max-width: 400px;
+}
+
+.team-member i {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.team-member h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.team-member ul {
+    list-style: none;
+    text-align: left;
+    padding-left: 1rem;
+}
+
+.team-member li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.team-member li:before {
+    content: "-";
+    position: absolute;
+    left: -0.5rem;
+}

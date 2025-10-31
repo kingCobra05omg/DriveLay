@@ -1,0 +1,144 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+}
+
+.navbar {
+    background-color: #003499;
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    overflow: visible;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.img{
+    width: auto;
+    height: 40px; 
+    display: block;
+    transform: scale(1.6); 
+    transform-origin: left center;
+    transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.texto{
+    margin-left: 20px;
+    font-size: 1.8rem;
+}
+
+.img:hover {
+    transform: scale(1.9);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 3rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #cfe8ff;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;  
+    gap: 0.5rem;
+}
+
+body {
+    background-color: #001f5e;
+}
+
+.main {
+    height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: -100px;
+}
+
+.download-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    background-color: rgba(0, 52, 153, 0.3);
+    padding: 2.5rem 4rem;
+    border-radius: 15px;
+    border: 2px solid #ADD8E6;
+    backdrop-filter: blur(5px);
+}
+
+.version-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: white;
+}
+
+.version-text {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.download-button {
+    padding: 1rem 3rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background-color: #003499;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.download-button:hover {
+    background-color: #004ecc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.download-button[disabled] {
+    background-color: #5a7fb8;
+    opacity: 0.85;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.windows-logo {
+    width: 30px;
+    height: auto;
+    margin-left: 1rem;
+}
+
+.downloads-wrapper {
+    display: flex;
+    gap: 3rem;
+    justify-content: center;
+}
+
+.android-logo {
+    width: 48px; 
+    height: auto;
+    display: block;
+}

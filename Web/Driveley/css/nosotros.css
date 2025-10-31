@@ -1,0 +1,128 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+}
+
+
+
+.navbar {
+    background-color: #003499;
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    overflow: visible;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.img{
+    width: auto;
+    height: 40px; 
+    display: block;
+    transform: scale(1.6); 
+    transform-origin: left center;
+    transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.texto{
+    margin-left: 20px;
+    font-size: 1.8rem;
+}
+
+.img:hover {
+    transform: scale(1.9);
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 3rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #cfe8ff;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;  
+    gap: 0.5rem;
+}
+
+ body{
+    background-image: url('../image/flota3.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+ }
+
+.team-container {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.team-member {
+    background-color: rgba(0, 52, 153, 0.9);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+    backdrop-filter: blur(5px);
+    max-width: 400px;
+}
+
+.team-member i {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+
+.team-photo {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 1rem auto;
+    border: 3px solid rgba(255,255,255,0.15);
+}
+
+.team-member h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.team-member ul {
+    list-style: none;
+    text-align: left;
+    padding-left: 1rem;
+}
+
+.team-member li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.team-member li:before {
+    content: "-";
+    position: absolute;
+    left: -0.5rem;
+}
