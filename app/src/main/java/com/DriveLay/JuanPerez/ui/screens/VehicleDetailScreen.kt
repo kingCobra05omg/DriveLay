@@ -135,6 +135,7 @@ fun VehicleDetailScreen(
         var editYear by remember(v.id) { mutableStateOf(anio) }
         var editColor by remember(v.id) { mutableStateOf(color) }
         var editPlate by remember(v.id) { mutableStateOf(v.plate ?: "") }
+        var editStatus by remember(v.id) { mutableStateOf(v.status.ifBlank { "Activo" }) }
         var editError by remember { mutableStateOf<String?>(null) }
         var saving by remember { mutableStateOf(false) }
 
@@ -197,9 +198,10 @@ fun VehicleDetailScreen(
                     "Inactivo" -> Color(0xFFFEE2E2) to Color(0xFF991B1B)
                     else -> Color(0xFFDDEAFE) to Color(0xFF1E40AF)
                 }
+                val displayStatus = if (statusText == "Mantenimiento" || statusText == "Inactivo") "En mantenimiento" else statusText
                 AssistChip(
                     onClick = {},
-                    label = { Text(statusText, color = chipFg, fontWeight = FontWeight.SemiBold) },
+                    label = { Text(displayStatus, color = chipFg, fontWeight = FontWeight.SemiBold) },
                     colors = AssistChipDefaults.assistChipColors(containerColor = chipBg)
                 )
             }
@@ -323,27 +325,51 @@ fun VehicleDetailScreen(
                 }
             }
 
-            // Botones de acción (sin funcionalidad por ahora)
-            // Acciones según rol
-            if (isOwner || isSubAdmin) {
+            // Botones de acción: permitir que Sub-administrador también pueda usar el vehículo
+            // Administrador: sólo edición
+            if (isOwner) {
                 Button(
                     onClick = { showEdit = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827))
                 ) { Text("Editar Vehículo") }
             } else {
-                Button(
-                    onClick = {
-                        val vid = v.id
-                        if (vid != null) {
-                            onSelectToUse(vid)
-                        } else {
-                            editError = "ID de vehículo inválida"
-                        }
-                    },
-                    enabled = !saving,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Seleccionar para usar") }
+                // Sub-administrador: puede editar y también usar
+                if (isSubAdmin) {
+                    Button(
+                        onClick = { showEdit = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF111827))
+                    ) { Text("Editar Vehículo") }
+                }
+                // Empleado y Sub-administrador: pueden seleccionar para usar
+                val isActive = v.status.isBlank() || v.status == "Activo"
+                if (isActive) {
+                    Button(
+                        onClick = {
+                            val vid = v.id
+                            if (vid != null) {
+                                onSelectToUse(vid)
+                            } else {
+                                editError = "ID de vehículo inválida"
+                            }
+                        },
+                        enabled = !saving,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Seleccionar para usar") }
+                } else {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            "En mantenimiento",
+                            color = Color(0xFF92400E),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
             }
             OutlinedButton(onClick = { /* Navegar a historial en el futuro */ }, modifier = Modifier.fillMaxWidth()) { Text("Ver Historial de Mantenimiento") }
         }
@@ -379,6 +405,14 @@ fun VehicleDetailScreen(
                             OutlinedTextField(value = editColor, onValueChange = { editColor = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
                         }
                     }
+                    Spacer(Modifier.height(12.dp))
+                    Text("Estado", color = Color(0xFF6B7280))
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = editStatus == "Activo", onClick = { editStatus = "Activo" }, label = { Text("Activo") })
+                        FilterChip(selected = editStatus == "Inactivo", onClick = { editStatus = "Inactivo" }, label = { Text("Inactivo") })
+                        FilterChip(selected = editStatus == "Mantenimiento", onClick = { editStatus = "Mantenimiento" }, label = { Text("Mantenimiento") })
+                    }
                     if (editError != null) {
                         Spacer(Modifier.height(8.dp))
                         Text(editError ?: "", color = Color(0xFFB00020))
@@ -394,9 +428,9 @@ fun VehicleDetailScreen(
                                 val newDesc = "Tipo: ${editVehicleType.trim()}, Año: ${editYear.trim()}, Color: ${editColor.trim()}"
                                 saving = true
                                 scope.launch {
-                                    firebaseManager.updateVehicle(cid, vid, mapOf("name" to newName, "plate" to editPlate.trim(), "description" to newDesc)).fold(
+                                    firebaseManager.updateVehicle(cid, vid, mapOf("name" to newName, "plate" to editPlate.trim(), "description" to newDesc, "status" to editStatus.trim())).fold(
                                         onSuccess = {
-                                            vehicle = v.copy(name = newName, plate = editPlate.trim(), description = newDesc)
+                                            vehicle = v.copy(name = newName, plate = editPlate.trim(), description = newDesc, status = editStatus.trim())
                                             saving = false
                                             showEdit = false
                                         },

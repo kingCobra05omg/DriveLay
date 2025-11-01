@@ -11,7 +11,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +34,26 @@ fun HomeScreen(
     } catch (e: Exception) {
         "v 0.0.5"
     }
+    val firebaseManager = remember { com.DriveLay.JuanPerez.firebase.FirebaseManager() }
+    var showBell by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val comp = firebaseManager.getCurrentCompanyId()
+        comp.fold(onSuccess = { cid ->
+            if (cid.isNullOrBlank()) {
+                showBell = false
+            } else {
+                val roleRes = firebaseManager.getUserRoleInCompany(cid)
+                roleRes.fold(onSuccess = { role ->
+                    showBell = (role == "Administrador" || role == "Sub-administrador")
+                }, onFailure = {
+                    showBell = false
+                })
+            }
+        }, onFailure = {
+            showBell = false
+        })
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -48,8 +68,21 @@ fun HomeScreen(
                     color = Color.White
                 )
             },
+            actions = {
+                if (showBell) {
+                    IconButton(onClick = { onBottomNavSelected("notificaciones") }) {
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Notificaciones",
+                            tint = Color.White
+                        )
+                    }
+                }
+            },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color(0xFF003499)
+                containerColor = Color(0xFF003499),
+                actionIconContentColor = Color.White,
+                titleContentColor = Color.White
             )
         )
 
@@ -188,20 +221,7 @@ fun HomeScreen(
                     indicatorColor = Color(0xFF1565C0)
                 )
             )
-            // Notificaciones
-            NavigationBarItem(
-                selected = false,
-                onClick = { onBottomNavSelected("notificaciones") },
-                icon = { Icon(Icons.Filled.Notifications, contentDescription = "Notificaciones") },
-                label = { Text("Notificaciones") },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color.White,
-                    unselectedIconColor = Color(0xFFBBDEFB),
-                    unselectedTextColor = Color(0xFFBBDEFB),
-                    indicatorColor = Color(0xFF1565C0)
-                )
-            )
+            // (Notificaciones eliminado de la barra inferior)
             // Perfil
             NavigationBarItem(
                 selected = false,

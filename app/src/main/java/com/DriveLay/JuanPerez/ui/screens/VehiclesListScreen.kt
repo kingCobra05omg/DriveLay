@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -368,11 +369,14 @@ fun VehiclesListScreen(
 
 @Composable
 private fun VehicleItem(vehicle: Vehicle, onClick: () -> Unit) {
+    val isInactiveLike = vehicle.status == "Inactivo" || vehicle.status == "Mantenimiento"
     ListItem(
         headlineContent = { Text(vehicle.name) },
         supportingContent = { Text(vehicle.plate) },
         trailingContent = { StatusChip(status = vehicle.status) },
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier
+            .alpha(if (isInactiveLike) 0.6f else 1f)
+            .clickable(onClick = onClick)
     )
     Divider()
 }
@@ -387,7 +391,7 @@ private fun StatusChip(status: String) {
     }
     AssistChip(
         onClick = {},
-        label = { Text(status, color = fg) },
+        label = { Text(if (status == "Mantenimiento" || status == "Inactivo") "En mantenimiento" else status, color = fg) },
         colors = AssistChipDefaults.assistChipColors(containerColor = bg)
     )
 }

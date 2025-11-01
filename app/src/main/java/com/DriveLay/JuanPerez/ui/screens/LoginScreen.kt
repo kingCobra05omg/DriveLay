@@ -45,8 +45,7 @@ fun LoginScreen(
     fun isValidEmail(value: String): Boolean =
         value.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(value).matches()
 
-    fun isValidPassword(value: String): Boolean =
-        value.length >= 6
+    fun isValidPassword(value: String): Boolean = value.matches(Regex("^\\d{6}$"))
     
     // Función para iniciar sesión
     fun signInUser() {
@@ -55,7 +54,7 @@ fun LoginScreen(
             return
         }
         if (!isValidPassword(password)) {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres"
+            errorMessage = "La contraseña debe ser de 6 dígitos"
             return
         }
 
@@ -177,10 +176,10 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña", color = Color.White) },
-                placeholder = { Text("••••••••", color = Color.White) },
+                placeholder = { Text("123456", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -206,7 +205,7 @@ fun LoginScreen(
 
             if (password.isNotEmpty() && !isValidPassword(password)) {
                 Text(
-                    text = "La contraseña debe tener al menos 6 caracteres",
+                    text = "La contraseña debe ser de 6 dígitos",
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier

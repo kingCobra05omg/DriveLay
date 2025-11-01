@@ -44,13 +44,25 @@ fun NotificationsScreen(
             loading = false
             error = "No perteneces a ninguna empresa"
         } else {
-            val nres = firebaseManager.getCompanyNotifications(cid)
-            nres.fold(onSuccess = {
-                notifications = it
+            // Verificar que el usuario sea Administrador o Sub-administrador antes de cargar notificaciones
+            val roleRes = firebaseManager.getUserRoleInCompany(cid)
+            roleRes.fold(onSuccess = { role ->
+                if (role == "Administrador" || role == "Sub-administrador") {
+                    val nres = firebaseManager.getCompanyNotifications(cid)
+                    nres.fold(onSuccess = {
+                        notifications = it
+                        loading = false
+                    }, onFailure = {
+                        error = it.message
+                        loading = false
+                    })
+                } else {
+                    loading = false
+                    error = "Solo el administrador o sub-administrador puede ver las notificaciones"
+                }
+            }, onFailure = { e ->
                 loading = false
-            }, onFailure = {
-                error = it.message
-                loading = false
+                error = e.message
             })
         }
     }

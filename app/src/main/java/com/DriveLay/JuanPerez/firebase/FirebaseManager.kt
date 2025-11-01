@@ -151,6 +151,15 @@ class FirebaseManager {
     // Listar notificaciones de la empresa (ordenadas por tiempo desc)
     suspend fun getCompanyNotifications(companyId: String): Result<List<Map<String, Any>>> {
         return try {
+            // Solo el Administrador puede leer las notificaciones
+            val roleCheck = getUserRoleInCompany(companyId)
+            roleCheck.fold(onSuccess = { role ->
+                if (role != "Administrador" && role != "Sub-administrador") {
+                    return Result.failure(IllegalAccessException("Permiso denegado: solo Administrador o Sub-administrador"))
+                }
+            }, onFailure = { err ->
+                return Result.failure(err)
+            })
             val snap = firestore.collection("companies").document(companyId)
                 .collection("notifications").orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get().await()
@@ -598,6 +607,13 @@ class FirebaseManager {
     suspend fun assignVehicleToCurrentUser(companyId: String, vehicleId: String): Result<Unit> {
         return try {
             val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
+            // Verificar estado antes de asignar
+            val vehDoc = firestore.collection("companies").document(companyId)
+                .collection("vehicles").document(vehicleId).get().await()
+            val status = (vehDoc.data?.get("status") as? String) ?: "Activo"
+            if (status != "Activo") {
+                return Result.failure(IllegalStateException("Vehículo no disponible para uso"))
+            }
             val updates = mapOf(
                 "status" to "En Uso",
                 "assignedTo" to uid,
@@ -632,6 +648,13 @@ class FirebaseManager {
     suspend fun startVehicleUsage(companyId: String, vehicleId: String, startKm: Int, startTimestamp: Long = System.currentTimeMillis()): Result<Unit> {
         return try {
             val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Usuario no autenticado"))
+            // Verificar estado antes de iniciar uso
+            val vehDoc = firestore.collection("companies").document(companyId)
+                .collection("vehicles").document(vehicleId).get().await()
+            val status = (vehDoc.data?.get("status") as? String) ?: "Activo"
+            if (status != "Activo") {
+                return Result.failure(IllegalStateException("Vehículo no disponible para uso"))
+            }
             val updates = mapOf(
                 "status" to "En Uso",
                 "assignedTo" to uid,

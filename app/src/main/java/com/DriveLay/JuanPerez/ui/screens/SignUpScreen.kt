@@ -54,15 +54,8 @@ fun SignUpScreen(
     fun isValidEmail(value: String): Boolean =
         value.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(value).matches()
 
-    // Requisitos más estrictos: mínimo 8, mayúscula, minúscula, número y símbolo
-    fun isValidPassword(value: String): Boolean {
-        val hasMinLength = value.length >= 8
-        val hasUpper = value.any { it.isUpperCase() }
-        val hasLower = value.any { it.isLowerCase() }
-        val hasDigit = value.any { it.isDigit() }
-        val hasSymbol = value.any { !it.isLetterOrDigit() }
-        return hasMinLength && hasUpper && hasLower && hasDigit && hasSymbol
-    }
+    // Requisito: exactamente 6 dígitos numéricos
+    fun isValidPassword(value: String): Boolean = value.matches(Regex("^\\d{6}$"))
     
     // Función para registrar usuario
     fun registerUser() {
@@ -71,7 +64,7 @@ fun SignUpScreen(
             return
         }
         if (!isValidPassword(password)) {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres"
+            errorMessage = "La contraseña debe ser de 6 dígitos"
             return
         }
         if (password != confirmPassword) {
@@ -121,7 +114,7 @@ fun SignUpScreen(
                             exception.message?.contains("email address is already in use") == true -> 
                                 "Este email ya está registrado"
                             exception.message?.contains("weak password") == true -> 
-                                "La contraseña debe tener al menos 6 caracteres"
+                                "La contraseña debe ser de 6 dígitos"
                             exception.message?.contains("invalid email") == true -> 
                                 "Email inválido"
                             else -> "Error al registrar: ${exception.message}"
@@ -278,15 +271,15 @@ fun SignUpScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Campo de Contraseña
+            // Campo de Contraseña (6 dígitos)
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña", color = Color.White) },
-                placeholder = { Text("Ingresa tu contraseña", color = Color.White) },
+                placeholder = { Text("123456", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -312,7 +305,7 @@ fun SignUpScreen(
 
             if (password.isNotEmpty() && !isValidPassword(password)) {
                 Text(
-                    text = "La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo",
+                    text = "La contraseña debe ser de 6 dígitos",
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier
@@ -323,15 +316,15 @@ fun SignUpScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Campo de Confirmar Contraseña
+            // Campo de Confirmar Contraseña (6 dígitos)
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
                 label = { Text("Confirmar Contraseña", color = Color.White) },
-                placeholder = { Text("Confirma tu contraseña", color = Color.White) },
+                placeholder = { Text("123456", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {

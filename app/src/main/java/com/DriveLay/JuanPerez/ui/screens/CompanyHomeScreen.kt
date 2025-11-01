@@ -40,6 +40,7 @@ fun CompanyHomeScreen(
     var employeesActive by remember { mutableStateOf(0) }
     var vehiclesActive by remember { mutableStateOf(0) }
     var isOwner by remember { mutableStateOf(false) }
+    var isSubAdmin by remember { mutableStateOf(false) }
     var companyId by remember { mutableStateOf<String?>(companyIdArg) }
     var logoUrl by remember { mutableStateOf<String?>(null) }
     val currentUserId = firebaseManager.getCurrentUser()?.uid
@@ -89,6 +90,13 @@ fun CompanyHomeScreen(
                     employeesCount = (data?.get("employees") as? Number)?.toInt()
                     vehiclesCount = (data?.get("vehicles") as? Number)?.toInt()
                     isOwner = ownerId == currentUserId
+                    // Resolver rol del usuario dentro de la empresa
+                    val roleRes = firebaseManager.getUserRoleInCompany(companyIdArg)
+                    roleRes.fold(onSuccess = { role ->
+                        isSubAdmin = (role == "Sub-administrador")
+                    }, onFailure = {
+                        isSubAdmin = false
+                    })
                     // Conteo base por miembros
                     val membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
                     employeesActive = membersCount
@@ -145,6 +153,13 @@ fun CompanyHomeScreen(
                             employeesCount = (data?.get("employees") as? Number)?.toInt()
                             vehiclesCount = (data?.get("vehicles") as? Number)?.toInt()
                             isOwner = ownerId == currentUserId
+                            // Resolver rol del usuario dentro de la empresa
+                            val roleRes = firebaseManager.getUserRoleInCompany(cid)
+                            roleRes.fold(onSuccess = { role ->
+                                isSubAdmin = (role == "Sub-administrador")
+                            }, onFailure = {
+                                isSubAdmin = false
+                            })
                             // Conteo base por miembros
                             val membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
                             employeesActive = membersCount
@@ -204,8 +219,10 @@ fun CompanyHomeScreen(
                     }
                 },
                 actions = {
-                    if (isOwner) {
+                    if (isOwner || isSubAdmin) {
                         TextButton(onClick = onGoToAdmin, colors = ButtonDefaults.textButtonColors(contentColor = Color.White)) { Text("Administrar") }
+                    }
+                    if (isOwner) {
                         TextButton(
                             onClick = {
                                 // Prefill values
@@ -262,7 +279,7 @@ fun CompanyHomeScreen(
                                 ) {
                                     Text(text = companyName ?: "Mi Empresa", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF212121))
                                     Spacer(Modifier.height(4.dp))
-                                    Text(text = if (isOwner) "Rol: Administrador" else "Rol: Miembro")
+                                    Text(text = if (isOwner) "Rol: Administrador" else if (isSubAdmin) "Rol: Sub-administrador" else "Rol: Miembro")
                                 }
 
                                 if (isOwner) {
