@@ -28,12 +28,8 @@ fun HomeScreen(
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val appVersion = try {
-        val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        "v ${info.versionName}"
-    } catch (e: Exception) {
-        "v 0.0.5"
-    }
+    // Mostrar versión fija según solicitud
+    val appVersion = "v 1.0"
     val firebaseManager = remember { com.DriveLay.JuanPerez.firebase.FirebaseManager() }
     var showBell by remember { mutableStateOf(false) }
 
