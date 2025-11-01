@@ -65,8 +65,8 @@ fun JoinCompanyScreen(
                     unfocusedTextColor = Color(0xFF212121),
                     focusedLabelColor = Color(0xFF616161),
                     unfocusedLabelColor = Color(0xFF9E9E9E),
-                    focusedContainerColor = Color(0xFFF1F5F9),
-                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
                     focusedBorderColor = Color(0xFFCBD5E1),
                     unfocusedBorderColor = Color(0xFFE2E8F0)
                 )
@@ -87,8 +87,8 @@ fun JoinCompanyScreen(
                     unfocusedTextColor = Color(0xFF212121),
                     focusedLabelColor = Color(0xFF616161),
                     unfocusedLabelColor = Color(0xFF9E9E9E),
-                    focusedContainerColor = Color(0xFFF1F5F9),
-                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
                     focusedBorderColor = Color(0xFFCBD5E1),
                     unfocusedBorderColor = Color(0xFFE2E8F0)
                 )

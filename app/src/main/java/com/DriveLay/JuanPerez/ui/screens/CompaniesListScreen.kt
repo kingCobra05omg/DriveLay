@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Business
 import com.DriveLay.JuanPerez.firebase.FirebaseManager
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,19 +24,22 @@ fun CompaniesListScreen(
     onSelectCompany: (String) -> Unit,
 ) {
     val firebaseManager = remember { FirebaseManager() }
+    val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var companies by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var activeCompanyId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         val res = firebaseManager.getUserCompanies()
         res.fold(onSuccess = {
             companies = it
-            loading = false
         }, onFailure = {
             error = it.message
-            loading = false
         })
+        val currentRes = firebaseManager.getCurrentCompanyId()
+        currentRes.fold(onSuccess = { activeCompanyId = it }, onFailure = { /* ignorar */ })
+        loading = false
     }
 
     Scaffold(
@@ -94,10 +98,24 @@ fun CompaniesListScreen(
                                         }
                                     },
                                     headlineContent = { Text(name) },
-                                    trailingContent = { Icon(Icons.Filled.ArrowForward, contentDescription = null) },
+                                    trailingContent = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            if (id == activeCompanyId) {
+                                                Text("Activa", color = Color(0xFF2E7D32))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                            }
+                                            Icon(Icons.Filled.ArrowForward, contentDescription = null)
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { onSelectCompany(id) }
+                                        .clickable {
+                                            scope.launch {
+                                                firebaseManager.setCurrentCompanyId(id)
+                                                activeCompanyId = id
+                                                onSelectCompany(id)
+                                            }
+                                        }
                                         .padding(horizontal = 8.dp)
                                 )
                                 Divider()

@@ -25,6 +25,8 @@ fun AdminDashboardScreen(
     onBackClick: () -> Unit,
     onManageEmployees: () -> Unit,
     onManageFleet: () -> Unit,
+    onViewUsageHistory: () -> Unit,
+    companyIdArg: String? = null,
 ) {
     val scope = rememberCoroutineScope()
     val firebaseManager = remember { FirebaseManager() }
@@ -33,24 +35,44 @@ fun AdminDashboardScreen(
     var employeesCount by remember { mutableStateOf(0) }
     var vehiclesCount by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(companyIdArg) {
         scope.launch {
-            val cidRes = firebaseManager.getCurrentCompanyId()
-            cidRes.fold(onSuccess = { cid ->
-                if (cid == null) {
-                    loading = false
-                    error = "No perteneces a ninguna empresa"
-                } else {
-                    val empRes = firebaseManager.getEmployees(cid)
-                    val vehRes = firebaseManager.getVehicles(cid)
-                    empRes.fold(onSuccess = { employeesCount = it.size }, onFailure = { error = it.message })
-                    vehRes.fold(onSuccess = { vehiclesCount = it.size }, onFailure = { error = it.message })
-                    loading = false
-                }
-            }, onFailure = {
+            if (companyIdArg != null) {
+                val companyRes = firebaseManager.getCompanyData(companyIdArg)
+                var membersCount = 0
+                companyRes.fold(onSuccess = { data ->
+                    membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
+                }, onFailure = { /* mantener 0 */ })
+
+                val empRes = firebaseManager.getEmployees(companyIdArg)
+                val vehRes = firebaseManager.getVehicles(companyIdArg)
+                empRes.fold(onSuccess = { employeesCount = maxOf(membersCount, it.size) }, onFailure = { employeesCount = membersCount })
+                vehRes.fold(onSuccess = { vehiclesCount = it.size }, onFailure = { error = it.message })
                 loading = false
-                error = it.message
-            })
+            } else {
+                val cidRes = firebaseManager.getCurrentCompanyId()
+                cidRes.fold(onSuccess = { cid ->
+                    if (cid == null) {
+                        loading = false
+                        error = "No perteneces a ninguna empresa"
+                    } else {
+                        val companyRes = firebaseManager.getCompanyData(cid)
+                        var membersCount = 0
+                        companyRes.fold(onSuccess = { data ->
+                            membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
+                        }, onFailure = { /* ignore, mantener 0 */ })
+
+                        val empRes = firebaseManager.getEmployees(cid)
+                        val vehRes = firebaseManager.getVehicles(cid)
+                        empRes.fold(onSuccess = { employeesCount = maxOf(membersCount, it.size) }, onFailure = { employeesCount = membersCount })
+                        vehRes.fold(onSuccess = { vehiclesCount = it.size }, onFailure = { error = it.message })
+                        loading = false
+                    }
+                }, onFailure = {
+                    loading = false
+                    error = it.message
+                })
+            }
         }
     }
 
@@ -98,6 +120,13 @@ fun AdminDashboardScreen(
                     subtitle = "$vehiclesCount Vehículos Operativos",
                     icon = { Icon(Icons.Filled.DirectionsCar, contentDescription = null) },
                     onClick = onManageFleet
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                DashboardCard(
+                    title = "Historial de Usos",
+                    subtitle = "Ver duración y distancia recorrida",
+                    icon = { Icon(Icons.Filled.DirectionsCar, contentDescription = null) },
+                    onClick = onViewUsageHistory
                 )
             }
         }

@@ -14,8 +14,11 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
@@ -30,17 +33,24 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import android.util.Patterns
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmployeesListScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    companyIdArg: String? = null
 ) {
     val firebaseManager = remember { FirebaseManager() }
+    val context = LocalContext.current
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var companyCode by remember { mutableStateOf<String?>(null) }
+    var companyName by remember { mutableStateOf<String?>(null) }
     var employees by remember { mutableStateOf<List<Employee>>(emptyList()) }
     var companyId by remember { mutableStateOf<String?>(null) }
     var logoUrl by remember { mutableStateOf<String?>(null) }
@@ -52,6 +62,8 @@ fun EmployeesListScreen(
     var inviteRole by remember { mutableStateOf("Empleado") }
     var isSending by remember { mutableStateOf(false) }
     var invitations by remember { mutableStateOf<List<Invitation>>(emptyList()) }
+    var invitationToDelete by remember { mutableStateOf<Invitation?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null && companyId != null && isOwner) {
@@ -77,44 +89,106 @@ fun EmployeesListScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        val cidRes = firebaseManager.getCurrentCompanyId()
-        cidRes.fold(onSuccess = { cid ->
+    LaunchedEffect(companyIdArg) {
+        val loadForCompany: suspend (String) -> Unit = { cid ->
             companyId = cid
-            if (cid == null) {
-                error = "No perteneces a ninguna empresa"
+            // Datos de la empresa: código, logo, owner y miembros
+            var ownerIdLocal: String? = null
+            var membersIdsLocal: List<String> = emptyList()
+            val companyRes = firebaseManager.getCompanyData(cid)
+            companyRes.fold(onSuccess = { data ->
+                companyCode = data?.get("code") as? String
+                companyName = data?.get("name") as? String
+                logoUrl = data?.get("logoUrl") as? String
+                ownerIdLocal = data?.get("ownerId") as? String
+                isOwner = ownerIdLocal == firebaseManager.getCurrentUser()?.uid
+                membersIdsLocal = ((data?.get("members") as? List<*>)?.mapNotNull { it as? String }) ?: emptyList()
+            }, onFailure = {
+                error = it.message
+            })
+
+            // Empleados desde la subcolección; si no hay, mostrar miembros como fallback
+            val empRes = firebaseManager.getEmployees(cid)
+            empRes.fold(onSuccess = { listFromCollection ->
+                var combined = listFromCollection
+                if (combined.isEmpty() && membersIdsLocal.isNotEmpty()) {
+                    val membersEmployees = mutableListOf<Employee>()
+                    for (uid in membersIdsLocal) {
+                        val userRes = firebaseManager.getUserData(uid)
+                        userRes.fold(onSuccess = { udata ->
+                            val nombre = (udata?.get("nombre") as? String)?.trim().orEmpty()
+                            val apellido = (udata?.get("apellido") as? String)?.trim().orEmpty()
+                            val email = (udata?.get("email") as? String)?.trim().orEmpty()
+                            val fullName = listOf(nombre, apellido).filter { it.isNotBlank() }.joinToString(" ").ifBlank { email.ifBlank { "Miembro" } }
+                            val role = if (uid == ownerIdLocal) "Administrador" else "Miembro"
+                            membersEmployees.add(
+                                Employee(
+                                    id = uid,
+                                    companyId = cid,
+                                    name = fullName,
+                                    role = role,
+                                    active = true,
+                                    email = email
+                                )
+                            )
+                        }, onFailure = { /* ignorar fallos individuales */ })
+                    }
+                    combined = membersEmployees
+                }
+                employees = combined
                 loading = false
-            } else {
-                val companyRes = firebaseManager.getCompanyData(cid)
-                companyRes.fold(onSuccess = { data ->
-                    companyCode = data?.get("code") as? String
-                    logoUrl = data?.get("logoUrl") as? String
-                    val ownerId = data?.get("ownerId") as? String
-                    isOwner = ownerId == firebaseManager.getCurrentUser()?.uid
-                }, onFailure = {
+            }, onFailure = {
+                // Si falla la colección, intentar al menos mostrar miembros
+                if (membersIdsLocal.isNotEmpty()) {
+                    val membersEmployees = mutableListOf<Employee>()
+                    for (uid in membersIdsLocal) {
+                        val userRes = firebaseManager.getUserData(uid)
+                        userRes.fold(onSuccess = { udata ->
+                            val nombre = (udata?.get("nombre") as? String)?.trim().orEmpty()
+                            val apellido = (udata?.get("apellido") as? String)?.trim().orEmpty()
+                            val email = (udata?.get("email") as? String)?.trim().orEmpty()
+                            val fullName = listOf(nombre, apellido).filter { it.isNotBlank() }.joinToString(" ").ifBlank { email.ifBlank { "Miembro" } }
+                            val role = if (uid == ownerIdLocal) "Administrador" else "Miembro"
+                            membersEmployees.add(
+                                Employee(
+                                    id = uid,
+                                    companyId = cid,
+                                    name = fullName,
+                                    role = role,
+                                    active = true,
+                                    email = email
+                                )
+                            )
+                        }, onFailure = { /* ignorar */ })
+                    }
+                    employees = membersEmployees
+                } else {
                     error = it.message
-                })
+                }
+                loading = false
+            })
 
-                val empRes = firebaseManager.getEmployees(cid)
-                empRes.fold(onSuccess = {
-                    employees = it
-                    loading = false
-                }, onFailure = {
-                    error = it.message
-                    loading = false
-                })
+            // Invitaciones de la empresa (solo para owner)
+            val invRes = firebaseManager.getInvitations(cid)
+            invRes.fold(onSuccess = { invitations = it }, onFailure = { /* no bloquear */ })
+        }
 
-                val invRes = firebaseManager.getInvitations(cid)
-                invRes.fold(onSuccess = {
-                    invitations = it
-                }, onFailure = {
-                    // no bloquear por error de invitaciones
-                })
-            }
-        }, onFailure = {
-            error = it.message
-            loading = false
-        })
+        if (companyIdArg != null) {
+            loadForCompany(companyIdArg)
+        } else {
+            val cidRes = firebaseManager.getCurrentCompanyId()
+            cidRes.fold(onSuccess = { cid ->
+                if (cid == null) {
+                    error = "No perteneces a ninguna empresa"
+                    loading = false
+                } else {
+                    loadForCompany(cid)
+                }
+            }, onFailure = {
+                error = it.message
+                loading = false
+            })
+        }
     }
 
     Scaffold(
@@ -139,6 +213,7 @@ fun EmployeesListScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             if (loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -149,12 +224,17 @@ fun EmployeesListScreen(
             } else {
                 // Código de la empresa visible y edición de imagen
                 if (companyCode != null || logoUrl != null) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))) {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.People, contentDescription = null)
+                                Icon(Icons.Filled.People, contentDescription = null, tint = Color(0xFF475569))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = "Código de la empresa: ${companyCode ?: "-"}")
+                                Text(
+                                    text = "Código de la empresa: ${companyCode ?: "-"}",
+                                    color = Color(0xFF0F172A),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 val clipboardManager = LocalClipboardManager.current
                                 if (companyCode != null) {
@@ -166,7 +246,11 @@ fun EmployeesListScreen(
                                             copied = false
                                         }
                                     }) {
-                                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copiar código")
+                                        Icon(
+                                            Icons.Filled.ContentCopy,
+                                            contentDescription = "Copiar código",
+                                            tint = Color(0xFF475569)
+                                        )
                                     }
                                 }
                             }
@@ -183,7 +267,12 @@ fun EmployeesListScreen(
                                         .height(160.dp)
                                 )
                             } else {
-                                Text(text = "Sin imagen de empresa")
+                                Text(
+                                    text = "Sin imagen de empresa",
+                                    color = Color(0xFF374151),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             if (isOwner) {
@@ -249,15 +338,38 @@ fun EmployeesListScreen(
                                     if (!isSending && Patterns.EMAIL_ADDRESS.matcher(inviteEmail).matches()) {
                                         scope.launch {
                                             isSending = true
-                                            firebaseManager.addInvitation(companyId!!, inviteEmail.trim(), inviteRole).fold(
+                                            val emailTo = inviteEmail.trim()
+                                            firebaseManager.addInvitation(companyId!!, emailTo, inviteRole).fold(
                                                 onSuccess = { id ->
                                                     invitations = invitations + Invitation(
                                                         id = id,
                                                         companyId = companyId!!,
-                                                        email = inviteEmail.trim(),
+                                                        email = emailTo,
                                                         role = inviteRole,
                                                         status = "Pendiente"
                                                     )
+                                                    // Abrir cliente de correo con el mensaje prellenado
+                                                    val subject = "Invitación a unirse a la empresa ${companyName ?: ""}"
+                                                    val body = buildString {
+                                                        appendLine("Has sido invitado a unirte a la empresa ${companyName ?: "(sin nombre)"}.")
+                                                        if (!companyCode.isNullOrBlank()) {
+                                                            appendLine("Código de empresa: ${companyCode}.")
+                                                        }
+                                                        appendLine("Rol asignado: ${inviteRole}.")
+                                                        appendLine()
+                                                        appendLine("Para unirte: abre la app DriveLay, ve a 'Unirse a Empresa' e ingresa el código.")
+                                                    }
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                                            data = Uri.parse("mailto:")
+                                                            putExtra(Intent.EXTRA_EMAIL, arrayOf(emailTo))
+                                                            putExtra(Intent.EXTRA_SUBJECT, subject)
+                                                            putExtra(Intent.EXTRA_TEXT, body)
+                                                        }
+                                                        context.startActivity(Intent.createChooser(intent, "Enviar invitación"))
+                                                    } catch (e: Exception) {
+                                                        error = "No se encontró una app de correo para enviar la invitación"
+                                                    }
                                                     inviteEmail = ""
                                                 },
                                                 onFailure = { e ->
@@ -320,12 +432,53 @@ fun EmployeesListScreen(
                                         }) {
                                             Icon(Icons.Filled.Close, contentDescription = "Cancelar")
                                         }
+                                        IconButton(onClick = {
+                                            invitationToDelete = inv
+                                            showDeleteDialog = true
+                                        }) {
+                                            Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+                                        }
                                     }
                                 }
                             )
                             Divider()
                         }
                     }
+                }
+
+                // Diálogo de confirmación para eliminar invitación
+                if (showDeleteDialog && invitationToDelete != null && companyId != null) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false; invitationToDelete = null },
+                        title = { Text("Eliminar invitación") },
+                        text = { Text("¿Seguro que deseas eliminar esta invitación pendiente? Esta acción no se puede deshacer.") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                val toDelete = invitationToDelete
+                                if (toDelete != null) {
+                                    scope.launch {
+                                        firebaseManager.deleteInvitation(companyId!!, toDelete.id).fold(
+                                            onSuccess = {
+                                                invitations = invitations.filter { it.id != toDelete.id }
+                                            },
+                                            onFailure = { /* opcional: mostrar error */ }
+                                        )
+                                        showDeleteDialog = false
+                                        invitationToDelete = null
+                                    }
+                                } else {
+                                    showDeleteDialog = false
+                                }
+                            }) {
+                                Text("Eliminar", color = Color(0xFFD32F2F))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false; invitationToDelete = null }) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
                 }
             }
         }

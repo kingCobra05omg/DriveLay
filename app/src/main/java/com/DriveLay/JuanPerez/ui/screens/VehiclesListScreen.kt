@@ -30,7 +30,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 @Composable
 fun VehiclesListScreen(
     onBackClick: () -> Unit,
-    onVehicleClick: (String) -> Unit = {}
+    onVehicleClick: (String) -> Unit = {},
+    companyIdArg: String? = null
 ) {
     val scope = rememberCoroutineScope()
     val firebaseManager = remember { FirebaseManager() }
@@ -40,6 +41,7 @@ fun VehiclesListScreen(
     var vehicles by remember { mutableStateOf<List<Vehicle>>(emptyList()) }
     var companyId by remember { mutableStateOf<String?>(null) }
     var isOwner by remember { mutableStateOf(false) }
+    var isSubAdmin by remember { mutableStateOf(false) }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var vehicleType by remember { mutableStateOf("Auto") }
@@ -49,37 +51,50 @@ fun VehiclesListScreen(
     var newColor by remember { mutableStateOf("") }
     var newPlate by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(companyIdArg) {
         scope.launch {
-            val comp = firebaseManager.getCurrentCompanyId()
-            comp.fold(onSuccess = { cid ->
+            val loadForCompany: suspend (String) -> Unit = { cid ->
                 companyId = cid
-                if (cid == null) {
+                val companyRes = firebaseManager.getCompanyData(cid)
+                companyRes.fold(onSuccess = { company ->
+                    val ownerId = company?.get("ownerId") as? String
+                    isOwner = ownerId == currentUserId
+                }, onFailure = {
+                    isOwner = false
+                })
+                // Resolver rol del usuario dentro de la empresa
+                val roleRes = firebaseManager.getUserRoleInCompany(cid)
+                roleRes.fold(onSuccess = { role ->
+                    isSubAdmin = (role == "Sub-administrador")
+                }, onFailure = {
+                    isSubAdmin = false
+                })
+                val res = firebaseManager.getVehicles(cid)
+                res.fold(onSuccess = {
+                    vehicles = it
                     loading = false
-                    error = "No perteneces a ninguna empresa"
-                } else {
-                    // Obtener datos de la empresa para verificar si el usuario es el owner
-                    val companyRes = firebaseManager.getCompanyData(cid)
-                    companyRes.fold(onSuccess = { company ->
-                        val ownerId = company?.get("ownerId") as? String
-                        isOwner = ownerId == currentUserId
-                    }, onFailure = {
-                        // Si falla, no bloquear la carga de vehículos pero mantener isOwner en false
-                        isOwner = false
-                    })
-                    val res = firebaseManager.getVehicles(cid)
-                    res.fold(onSuccess = {
-                        vehicles = it
+                }, onFailure = {
+                    loading = false
+                    error = it.message
+                })
+            }
+
+            if (companyIdArg != null) {
+                loadForCompany(companyIdArg)
+            } else {
+                val comp = firebaseManager.getCurrentCompanyId()
+                comp.fold(onSuccess = { cid ->
+                    if (cid == null) {
                         loading = false
-                    }, onFailure = {
-                        loading = false
-                        error = it.message
-                    })
-                }
-            }, onFailure = {
-                loading = false
-                error = it.message
-            })
+                        error = "No perteneces a ninguna empresa"
+                    } else {
+                        loadForCompany(cid)
+                    }
+                }, onFailure = {
+                    loading = false
+                    error = it.message
+                })
+            }
         }
     }
 
@@ -100,7 +115,7 @@ fun VehiclesListScreen(
             )
         },
         floatingActionButton = {
-            if (isOwner) {
+            if (isOwner || isSubAdmin) {
                 FloatingActionButton(onClick = { showAddDialog = true }) {
                     Icon(Icons.Filled.Add, contentDescription = "Añadir")
                 }
@@ -290,8 +305,8 @@ fun VehiclesListScreen(
                 Button(
                     onClick = {
                         val cid = companyId
-                        if (!isOwner) {
-                            error = "Solo el administrador puede añadir vehículos"
+                        if (!isOwner && !isSubAdmin) {
+                            error = "Solo sub-administrador o administrador puede añadir vehículos"
                             return@Button
                         }
                         val yearInt = newYear.toIntOrNull()

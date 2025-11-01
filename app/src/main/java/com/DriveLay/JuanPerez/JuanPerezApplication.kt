@@ -5,6 +5,14 @@ import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import android.content.pm.ApplicationInfo
 
 class JuanPerezApplication : Application() {
     override fun onCreate() {
@@ -41,6 +49,63 @@ class JuanPerezApplication : Application() {
                 Log.d("Firebase", "Firebase inicializado manualmente como respaldo")
             } catch (fallbackException: Exception) {
                 Log.e("Firebase", "Error en inicialización de respaldo", fallbackException)
+            }
+        }
+
+        // Ejecutar diagnóstico y smoke test solo en debug
+        if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            runFirebaseDiagnostics()
+        }
+    }
+
+    private fun runFirebaseDiagnostics() {
+        // Log de opciones activas
+        try {
+            val app = FirebaseApp.getInstance()
+            val opts = app.options
+            Log.i("FirebaseDiag", "projectId=${opts.projectId}, appId=${opts.applicationId}, bucket=${opts.storageBucket}")
+        } catch (e: Exception) {
+            Log.w("FirebaseDiag", "FirebaseApp no inicializado aún", e)
+        }
+
+        // Pruebas simples de conectividad en background
+        CoroutineScope(Dispatchers.IO).launch {
+            // Auth
+            try {
+                val user = FirebaseAuth.getInstance().currentUser
+                Log.i("FirebaseDiag", "authUser=${user?.uid ?: "null"}")
+            } catch (e: Exception) {
+                Log.e("FirebaseDiag", "Auth error", e)
+            }
+
+            // Firestore: lectura simple
+            try {
+                val fs = FirebaseFirestore.getInstance()
+                val snap = fs.collection("companies").limit(1).get().await()
+                Log.i("FirebaseDiag", "Firestore OK, companiesCount=${snap.size()}")
+            } catch (e: Exception) {
+                Log.e("FirebaseDiag", "Firestore error", e)
+            }
+
+            // Storage: listar carpeta 'smoke'
+            try {
+                val storage = FirebaseStorage.getInstance()
+                val bucket = storage.reference.bucket
+                Log.i("FirebaseDiag", "Storage bucket=$bucket")
+                val listResult = storage.reference.child("smoke").list(1).await()
+                Log.i("FirebaseDiag", "Storage OK, items=${listResult.items.size}")
+            } catch (e: Exception) {
+                Log.e("FirebaseDiag", "Storage error", e)
+            }
+
+            // Realtime DB: estado de conexión
+            try {
+                val db = FirebaseDatabase.getInstance()
+                val infoSnap = db.getReference(".info/connected").get().await()
+                val connected = infoSnap.getValue(Boolean::class.java)
+                Log.i("FirebaseDiag", "Realtime DB connected=${connected}")
+            } catch (e: Exception) {
+                Log.e("FirebaseDiag", "Realtime DB error", e)
             }
         }
     }

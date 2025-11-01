@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.DriveLay.JuanPerez.navigation.AppNavigation
 import com.DriveLay.JuanPerez.ui.theme.JuanPerezTheme
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : ComponentActivity() {
@@ -25,7 +26,13 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+                    val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
+                    val startDestination = if (isLoggedIn) {
+                        com.DriveLay.JuanPerez.navigation.Screen.Home.route
+                    } else {
+                        com.DriveLay.JuanPerez.navigation.Screen.Welcome.route
+                    }
+                    AppNavigation(navController = navController, startDestination = startDestination)
                 }
             }
         }

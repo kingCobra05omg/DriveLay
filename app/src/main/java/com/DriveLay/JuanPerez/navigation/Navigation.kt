@@ -33,13 +33,23 @@ sealed class Screen(val route: String) {
     object AdminDashboard : Screen("adminDashboard")
     object Companies : Screen("companies")
     object CompanyHomeDetail : Screen("companyHome/{companyId}")
+    object AdminDashboardDetail : Screen("adminDashboard/{companyId}")
     object Employees : Screen("employees")
+    object EmployeesDetail : Screen("employees/{companyId}")
+    object VehiclesDetail : Screen("vehicles/{companyId}")
     object VehicleDetail : Screen("vehicleDetail/{vehicleId}")
+    object VehicleCheckout : Screen("vehicleCheckout/{vehicleId}")
+    object VehicleInUse : Screen("vehicleInUse/{vehicleId}")
+    object VehicleReturn : Screen("vehicleReturn/{vehicleId}")
+    object Notifications : Screen("notifications")
+    object NotificationsDetail : Screen("notifications/{companyId}")
+    object UsageHistory : Screen("usageHistory")
+    object UsageHistoryDetail : Screen("usageHistory/{companyId}")
 }
 
 @Composable
-fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.Welcome.route) {
+fun AppNavigation(navController: NavHostController, startDestination: String) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Welcome.route) {
             WelcomeScreen(
                 onLoginClick = {
@@ -98,9 +108,10 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onBottomNavSelected = { dest ->
                     when (dest) {
-                        "home" -> Unit
+                        "inicio" -> Unit
                         "empresa" -> navController.navigate(Screen.CompanyHome.route)
                         "vehiculos" -> navController.navigate(Screen.Vehicles.route)
+                        "notificaciones" -> navController.navigate(Screen.Notifications.route)
                         "perfil" -> navController.navigate(Screen.Profile.route)
                         else -> Unit
                     }
@@ -200,7 +211,10 @@ fun AppNavigation(navController: NavHostController) {
             val companyId = backStackEntry.arguments?.getString("companyId")
             CompanyHomeScreen(
                 onBackClick = { navController.popBackStack() },
-                onGoToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
+                onGoToAdmin = {
+                    val cid = companyId ?: ""
+                    navController.navigate("adminDashboard/$cid")
+                },
                 companyIdArg = companyId
             )
         }
@@ -210,13 +224,36 @@ fun AppNavigation(navController: NavHostController) {
             AdminDashboardScreen(
                 onBackClick = { navController.popBackStack() },
                 onManageEmployees = { navController.navigate(Screen.Employees.route) },
-                onManageFleet = { navController.navigate(Screen.Vehicles.route) }
+                onManageFleet = { navController.navigate(Screen.Vehicles.route) },
+                onViewUsageHistory = { navController.navigate(Screen.UsageHistory.route) }
+            )
+        }
+
+        // Panel de Administración por empresa seleccionada
+        composable(
+            route = "adminDashboard/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId") ?: ""
+            AdminDashboardScreen(
+                onBackClick = { navController.popBackStack() },
+                onManageEmployees = { navController.navigate("employees/$companyId") },
+                onManageFleet = { navController.navigate("vehicles/$companyId") },
+                onViewUsageHistory = { navController.navigate("usageHistory/$companyId") },
+                companyIdArg = companyId
             )
         }
 
         // Lista de Empleados
         composable(Screen.Employees.route) {
             EmployeesListScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(
+            route = "employees/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId") ?: ""
+            EmployeesListScreen(onBackClick = { navController.popBackStack() }, companyIdArg = companyId)
         }
         
         // Lista de Vehículos
@@ -228,6 +265,17 @@ fun AppNavigation(navController: NavHostController) {
                 }
             )
         }
+        composable(
+            route = "vehicles/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId") ?: ""
+            VehiclesListScreen(
+                onBackClick = { navController.popBackStack() },
+                onVehicleClick = { vehicleId -> navController.navigate("vehicleDetail/$vehicleId") },
+                companyIdArg = companyId
+            )
+        }
 
         // Detalle de Vehículo
         composable(
@@ -237,8 +285,81 @@ fun AppNavigation(navController: NavHostController) {
             val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: ""
             VehicleDetailScreen(
                 onBackClick = { navController.popBackStack() },
-                vehicleId = vehicleId
+                vehicleId = vehicleId,
+                onSelectToUse = { id ->
+                    navController.navigate("vehicleCheckout/$id")
+                }
             )
+        }
+
+        // Registrar Salida
+        composable(
+            route = "vehicleCheckout/{vehicleId}",
+            arguments = listOf(navArgument("vehicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: ""
+            VehicleCheckoutScreen(
+                onBackClick = { navController.popBackStack() },
+                vehicleId = vehicleId,
+                onCheckoutSuccess = { id ->
+                    navController.navigate("vehicleInUse/$id")
+                }
+            )
+        }
+
+        // Vehículo en uso (temporizador y ayuda)
+        composable(
+            route = "vehicleInUse/{vehicleId}",
+            arguments = listOf(navArgument("vehicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: ""
+            VehicleInUseScreen(
+                onBackClick = { navController.popBackStack() },
+                vehicleId = vehicleId,
+                onFinishClick = { id -> navController.navigate("vehicleReturn/$id") }
+            )
+        }
+
+        // Registrar Devolución
+        composable(
+            route = "vehicleReturn/{vehicleId}",
+            arguments = listOf(navArgument("vehicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: ""
+            VehicleReturnScreen(
+                onBackClick = { navController.popBackStack() },
+                vehicleId = vehicleId,
+                onReturnCompleted = {
+                    navController.navigate(Screen.Vehicles.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        // Notificaciones
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(
+            route = "notifications/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId") ?: ""
+            NotificationsScreen(onBackClick = { navController.popBackStack() }, companyIdArg = companyId)
+        }
+
+        // Historial de Usos
+        composable(Screen.UsageHistory.route) {
+            UsageHistoryScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(
+            route = "usageHistory/{companyId}",
+            arguments = listOf(navArgument("companyId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val companyId = backStackEntry.arguments?.getString("companyId") ?: ""
+            UsageHistoryScreen(onBackClick = { navController.popBackStack() }, companyIdArg = companyId)
         }
     }
 }

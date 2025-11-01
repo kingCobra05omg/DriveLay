@@ -9,9 +9,10 @@ data class Vehicle(
     val description: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val assignedTo: String? = null,
-    val assignedAt: Long? = null
+    val assignedAt: Long? = null,
+    val startKm: Int? = null
 ) {
-    constructor() : this("", "", "", "", "Activo", "", 0L, null, null)
+    constructor() : this("", "", "", "", "Activo", "", 0L, null, null, null)
 
     fun toMap(): Map<String, Any> {
         val map = mutableMapOf<String, Any>(
@@ -25,6 +26,7 @@ data class Vehicle(
         )
         assignedTo?.let { map["assignedTo"] = it }
         assignedAt?.let { map["assignedAt"] = it }
+        startKm?.let { map["startKm"] = it }
         return map
     }
 
@@ -38,7 +40,8 @@ data class Vehicle(
             description = map["description"] as? String ?: "",
             createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L,
             assignedTo = map["assignedTo"] as? String,
-            assignedAt = (map["assignedAt"] as? Number)?.toLong()
+            assignedAt = (map["assignedAt"] as? Number)?.toLong(),
+            startKm = (map["startKm"] as? Number)?.toInt()
         )
     }
 }

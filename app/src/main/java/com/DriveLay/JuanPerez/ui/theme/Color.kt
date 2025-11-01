@@ -2,10 +2,11 @@ package com.DriveLay.JuanPerez.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Yellow variants replacing previous purple/pink palette
+val Purple80 = Color(0xFFFFE082)      // Amber 200
+val PurpleGrey80 = Color(0xFFFDD835)  // Yellow 600 (light variant for dark scheme)
+val Pink80 = Color(0xFFFFF176)        // Yellow 400
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val Purple40 = Color(0xFFFFC107)      // Amber 500
+val PurpleGrey40 = Color(0xFFFFB300)  // Amber 600
+val Pink40 = Color(0xFFFFD54F)        // Amber 300

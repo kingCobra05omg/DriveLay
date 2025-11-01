@@ -28,7 +28,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun VehicleDetailScreen(
     onBackClick: () -> Unit,
-    vehicleId: String
+    vehicleId: String,
+    onSelectToUse: (String) -> Unit = {}
 ) {
     val firebaseManager = remember { FirebaseManager() }
     val scope = rememberCoroutineScope()
@@ -38,6 +39,7 @@ fun VehicleDetailScreen(
     var vehicle by remember { mutableStateOf<Vehicle?>(null) }
     var companyId by remember { mutableStateOf<String?>(null) }
     var isOwner by remember { mutableStateOf(false) }
+    var isSubAdmin by remember { mutableStateOf(false) }
 
     LaunchedEffect(vehicleId) {
         val comp = firebaseManager.getCurrentCompanyId()
@@ -54,6 +56,13 @@ fun VehicleDetailScreen(
                     isOwner = ownerId == currentUserId
                 }, onFailure = {
                     isOwner = false
+                })
+                // Resolver rol del usuario dentro de la empresa
+                val roleRes = firebaseManager.getUserRoleInCompany(cid)
+                roleRes.fold(onSuccess = { role ->
+                    isSubAdmin = (role == "Sub-administrador")
+                }, onFailure = {
+                    isSubAdmin = false
                 })
 
                 val res = firebaseManager.getVehicles(cid)
@@ -136,7 +145,7 @@ fun VehicleDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Encabezado con ícono realzado, nombre y placa en chip
+            // Encabezado con ícono más grande, nombre y placa como chips de alto contraste
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Surface(
                     shape = CircleShape,
@@ -144,7 +153,7 @@ fun VehicleDetailScreen(
                     shadowElevation = 6.dp,
                     tonalElevation = 2.dp,
                     border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.size(96.dp)
+                    modifier = Modifier.size(112.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         val icon = if ((tipo.lowercase()).contains("camión")) Icons.Filled.LocalShipping else Icons.Filled.DirectionsCar
@@ -152,12 +161,18 @@ fun VehicleDetailScreen(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    v.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1F2937)
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text(
+                        v.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
                 Spacer(Modifier.height(6.dp))
                 val plateText = v.plate ?: ""
                 if (plateText.isNotBlank()) {
@@ -170,7 +185,7 @@ fun VehicleDetailScreen(
                             plateText,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
                 }
@@ -200,7 +215,7 @@ fun VehicleDetailScreen(
                         "Información General",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color(0xFF000000)
                     )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -310,7 +325,7 @@ fun VehicleDetailScreen(
 
             // Botones de acción (sin funcionalidad por ahora)
             // Acciones según rol
-            if (isOwner) {
+            if (isOwner || isSubAdmin) {
                 Button(
                     onClick = { showEdit = true },
                     modifier = Modifier.fillMaxWidth(),
@@ -319,32 +334,11 @@ fun VehicleDetailScreen(
             } else {
                 Button(
                     onClick = {
-                        val cid = companyId
                         val vid = v.id
-                        if (cid != null && vid != null) {
-                            saving = true
-                            val newStatus = "En Uso"
-                            val newDesc = if (desc.contains("Asignado a:")) desc else listOf(desc, "Asignado a: ${currentUserId ?: ""}").filter { it.isNotBlank() }.joinToString(", ")
-                            val updates = mutableMapOf<String, Any>(
-                                "status" to newStatus,
-                                "description" to newDesc
-                            )
-                            currentUserId?.let {
-                                updates["assignedTo"] = it
-                                updates["assignedAt"] = System.currentTimeMillis()
-                            }
-                            scope.launch {
-                                firebaseManager.updateVehicle(cid, vid, updates).fold(
-                                    onSuccess = {
-                                        vehicle = v.copy(status = newStatus, description = newDesc, assignedTo = currentUserId, assignedAt = System.currentTimeMillis())
-                                        saving = false
-                                    },
-                                    onFailure = {
-                                        editError = it.message
-                                        saving = false
-                                    }
-                                )
-                            }
+                        if (vid != null) {
+                            onSelectToUse(vid)
+                        } else {
+                            editError = "ID de vehículo inválida"
                         }
                     },
                     enabled = !saving,

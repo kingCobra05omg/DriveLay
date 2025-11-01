@@ -180,16 +180,19 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
-                label = { Text("Nombre", color = Color(0xFF212121)) },
-                placeholder = { Text("Ingresa tu nombre", color = Color(0xFF424242)) },
+                label = { Text("Nombre", color = Color.White) },
+                placeholder = { Text("Ingresa tu nombre", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF212121),
-                    unfocusedTextColor = Color(0xFF212121),
-                    focusedLabelColor = Color(0xFF212121),
-                    unfocusedLabelColor = Color(0xFF424242)
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.White,
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White
                 )
             )
             
@@ -199,16 +202,19 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = apellido,
                 onValueChange = { apellido = it },
-                label = { Text("Apellido", color = Color(0xFF212121)) },
-                placeholder = { Text("Ingresa tu apellido", color = Color(0xFF424242)) },
+                label = { Text("Apellido", color = Color.White) },
+                placeholder = { Text("Ingresa tu apellido", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF212121),
-                    unfocusedTextColor = Color(0xFF212121),
-                    focusedLabelColor = Color(0xFF212121),
-                    unfocusedLabelColor = Color(0xFF424242)
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.White,
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White
                 )
             )
             
@@ -218,17 +224,20 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = dni,
                 onValueChange = { dni = it },
-                label = { Text("DNI", color = Color(0xFF212121)) },
-                placeholder = { Text("Ingresa tu DNI", color = Color(0xFF424242)) },
+                label = { Text("DNI", color = Color.White) },
+                placeholder = { Text("Ingresa tu DNI", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF212121),
-                    unfocusedTextColor = Color(0xFF212121),
-                    focusedLabelColor = Color(0xFF212121),
-                    unfocusedLabelColor = Color(0xFF424242)
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.White,
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White
                 )
             )
             
@@ -238,18 +247,21 @@ fun SignUpScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email", color = Color(0xFF212121)) },
-                placeholder = { Text("Ingresa tu email", color = Color(0xFF424242)) },
+                label = { Text("Email", color = Color.White) },
+                placeholder = { Text("Ingresa tu email", color = Color.White) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 isError = email.isNotEmpty() && !isValidEmail(email),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF212121),
-                    unfocusedTextColor = Color(0xFF212121),
-                    focusedLabelColor = Color(0xFF212121),
-                    unfocusedLabelColor = Color(0xFF424242)
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.White,
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White
                 )
             )
 

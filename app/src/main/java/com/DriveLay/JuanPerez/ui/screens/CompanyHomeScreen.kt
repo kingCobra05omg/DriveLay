@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,9 @@ fun CompanyHomeScreen(
     var companyName by remember { mutableStateOf<String?>(null) }
     var employeesCount by remember { mutableStateOf<Int?>(null) }
     var vehiclesCount by remember { mutableStateOf<Int?>(null) }
+    // Conteo actual (activos) obtenido desde colecciones
+    var employeesActive by remember { mutableStateOf(0) }
+    var vehiclesActive by remember { mutableStateOf(0) }
     var isOwner by remember { mutableStateOf(false) }
     var companyId by remember { mutableStateOf<String?>(companyIdArg) }
     var logoUrl by remember { mutableStateOf<String?>(null) }
@@ -45,6 +49,9 @@ fun CompanyHomeScreen(
     var newVehicles by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
     var isSavingLogo by remember { mutableStateOf(false) }
+    var attemptedDefaultUpload by remember { mutableStateOf(false) }
+    // Imagen por defecto servida desde entorno local de desarrollo
+    val defaultCompanyImageUrlDev = "http://10.0.2.2:5501/Imagenes/FondoBody.jpg"
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null && companyId != null && isOwner) {
@@ -82,6 +89,41 @@ fun CompanyHomeScreen(
                     employeesCount = (data?.get("employees") as? Number)?.toInt()
                     vehiclesCount = (data?.get("vehicles") as? Number)?.toInt()
                     isOwner = ownerId == currentUserId
+                    // Conteo base por miembros
+                    val membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
+                    employeesActive = membersCount
+                    // Obtener conteos actuales (activos) desde colección empleados y tomar el mayor
+                    val empRes = firebaseManager.getEmployees(companyIdArg)
+                    empRes.fold(
+                        onSuccess = { employeesActive = maxOf(membersCount, it.size) },
+                        onFailure = { employeesActive = membersCount }
+                    )
+                    val vehRes = firebaseManager.getVehicles(companyIdArg)
+                    vehRes.fold(onSuccess = { vehiclesActive = it.size }, onFailure = { /* mantener default */ })
+
+                    // Subir y fijar imagen por defecto si no hay logo
+                    if (!attemptedDefaultUpload && (logoUrl == null || logoUrl!!.isBlank()) && isOwner) {
+                        attemptedDefaultUpload = true
+                        isSavingLogo = true
+                        scope.launch {
+                            firebaseManager.uploadDefaultCompanyImageFromUrl(companyIdArg, defaultCompanyImageUrlDev).fold(
+                                onSuccess = { url ->
+                                    firebaseManager.updateCompany(companyIdArg, mapOf("logoUrl" to url)).fold(
+                                        onSuccess = {
+                                            logoUrl = url
+                                        },
+                                        onFailure = { e ->
+                                            error = e.message
+                                        }
+                                    )
+                                },
+                                onFailure = { e ->
+                                    error = e.message
+                                }
+                            )
+                            isSavingLogo = false
+                        }
+                    }
                     loading = false
                 }, onFailure = {
                     error = it.message
@@ -103,6 +145,41 @@ fun CompanyHomeScreen(
                             employeesCount = (data?.get("employees") as? Number)?.toInt()
                             vehiclesCount = (data?.get("vehicles") as? Number)?.toInt()
                             isOwner = ownerId == currentUserId
+                            // Conteo base por miembros
+                            val membersCount = ((data?.get("members") as? List<*>)?.size) ?: 0
+                            employeesActive = membersCount
+                            // Obtener conteos actuales (activos) desde colección empleados y tomar el mayor
+                            val empRes = firebaseManager.getEmployees(cid)
+                            empRes.fold(
+                                onSuccess = { employeesActive = maxOf(membersCount, it.size) },
+                                onFailure = { employeesActive = membersCount }
+                            )
+                            val vehRes = firebaseManager.getVehicles(cid)
+                            vehRes.fold(onSuccess = { vehiclesActive = it.size }, onFailure = { /* mantener default */ })
+
+                            // Subir y fijar imagen por defecto si no hay logo
+                            if (!attemptedDefaultUpload && (logoUrl == null || logoUrl!!.isBlank()) && isOwner && cid != null) {
+                                attemptedDefaultUpload = true
+                                isSavingLogo = true
+                                scope.launch {
+                                    firebaseManager.uploadDefaultCompanyImageFromUrl(cid, defaultCompanyImageUrlDev).fold(
+                                        onSuccess = { url ->
+                                            firebaseManager.updateCompany(cid, mapOf("logoUrl" to url)).fold(
+                                                onSuccess = {
+                                                    logoUrl = url
+                                                },
+                                                onFailure = { e ->
+                                                    error = e.message
+                                                }
+                                            )
+                                        },
+                                        onFailure = { e ->
+                                            error = e.message
+                                        }
+                                    )
+                                    isSavingLogo = false
+                                }
+                            }
                             loading = false
                         }, onFailure = {
                             error = it.message
@@ -120,7 +197,7 @@ fun CompanyHomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Mi Empresa", fontWeight = FontWeight.SemiBold, color = Color.White) },
+                title = { Text(text = "Inicio", fontWeight = FontWeight.SemiBold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = null, tint = Color.White)
@@ -162,44 +239,47 @@ fun CompanyHomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Spacer(Modifier.height(24.dp))
-                        Box(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp)
+                                .height(180.dp)
+                                .padding(horizontal = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            if (logoUrl != null) {
+                            Box(modifier = Modifier.fillMaxSize()) {
                                 AsyncImage(
-                                    model = logoUrl,
-                                    contentDescription = "Logo de la empresa",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                )
-                            } else {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                    contentDescription = null,
+                                    model = (logoUrl ?: defaultCompanyImageUrlDev),
+                                    contentDescription = "Foto de la empresa",
+                                    contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
-                            }
 
-                            if (isOwner) {
-                                // Botón para cambiar imagen del logo
-                                FilledTonalButton(
-                                    onClick = { imagePicker.launch("image/*") },
-                                    enabled = !isSavingLogo,
+                                Column(
                                     modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .padding(8.dp)
+                                        .align(Alignment.BottomStart)
+                                        .padding(12.dp)
                                 ) {
-                                    Text(if (isSavingLogo) "Subiendo..." else "Cambiar imagen")
+                                    Text(text = companyName ?: "Mi Empresa", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF212121))
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(text = if (isOwner) "Rol: Administrador" else "Rol: Miembro")
+                                }
+
+                                if (isOwner) {
+                                    // Botón para cambiar imagen del logo
+                                    FilledTonalButton(
+                                        onClick = { imagePicker.launch("image/*") },
+                                        enabled = !isSavingLogo,
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .padding(8.dp)
+                                    ) {
+                                        Text(if (isSavingLogo) "Subiendo..." else "Cambiar imagen")
+                                    }
                                 }
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        Text(text = companyName ?: "Mi Empresa", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(4.dp))
-                        Text(text = if (isOwner) "Rol: Administrador" else "Rol: Miembro")
-
+                        
                         Spacer(Modifier.height(16.dp))
 
                         Row(
@@ -219,9 +299,9 @@ fun CompanyHomeScreen(
                                         .padding(12.dp),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Text("Empleados", fontSize = 14.sp, color = Color(0xFF6B7280))
+                                    Text("Empleados", fontSize = 14.sp, color = Color(0xFF003499))
                                     Spacer(Modifier.height(4.dp))
-                                    Text((employeesCount ?: 0).toString(), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                    Text("${employeesActive}/${employeesCount ?: 0}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF212121))
                                 }
                             }
 
@@ -238,9 +318,9 @@ fun CompanyHomeScreen(
                                         .padding(12.dp),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Text("Vehículos", fontSize = 14.sp, color = Color(0xFF6B7280))
+                                    Text("Vehículos", fontSize = 14.sp, color = Color(0xFF003499))
                                     Spacer(Modifier.height(4.dp))
-                                    Text((vehiclesCount ?: 0).toString(), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                    Text("${vehiclesActive}/${vehiclesCount ?: 0}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF212121))
                                 }
                             }
                         }
